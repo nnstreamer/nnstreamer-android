@@ -38,3 +38,7 @@ gradle-app.setting
 
 # Ignore Gradle build output directory
 build
+
+# Ignore 3rd party binaries
+/externals/downloadable
+/externals/gst-1.0-android-universal
