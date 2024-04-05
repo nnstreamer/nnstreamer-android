@@ -1,0 +1,12 @@
+[versions]
+gstreamer = "1.24.0"
+tukaani-xz-plugin = "1.9"
+commons-compress-lib = "1.26.1"
+xyz-simple-git-plugin = "2.0.3"
+
+[libraries]
+tukaani-xz ={ group = "org.tukaani", name= "xz", version.ref =  "tukaani-xz-plugin" }
+commons-compress = { group = "org.apache.commons", name= "commons-compress", version.ref = "commons-compress-lib" }
+
+[plugins]
+xyz-simple-git = { id = "xyz.ronella.simple-git", version.ref = "xyz-simple-git-plugin" }
