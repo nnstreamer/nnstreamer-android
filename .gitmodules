@@ -1,0 +1,8 @@
+[submodule "externals/nnstreamer"]
+	path = externals/nnstreamer
+	url = https://github.com/nnstreamer/nnstreamer
+	branch = main
+[submodule "externals/ml-api"]
+	path = externals/ml-api
+	url = https://github.com/nnstreamer/api
+	branch = main
