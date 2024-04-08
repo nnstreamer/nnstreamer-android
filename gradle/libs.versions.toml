@@ -4,6 +4,7 @@ tukaani-xz-plugin = "1.9"
 commons-compress-lib = "1.26.1"
 xyz-simple-git-plugin = "2.0.3"
 agp = "8.3.1"
+android-compile-sdk = "34"
 kotlin = "1.9.23"
 coreKtx = "1.12.0"
 junit = "4.13.2"
@@ -34,4 +35,5 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 [plugins]
 xyz-simple-git = { id = "xyz.ronella.simple-git", version.ref = "xyz-simple-git-plugin" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
 jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

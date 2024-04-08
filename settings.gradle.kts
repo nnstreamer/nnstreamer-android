@@ -30,3 +30,4 @@ dependencyResolutionManagement {
 rootProject.name = "nnstreamer-android"
 
 include(":externals")
+include(":nnstreamer-api")
