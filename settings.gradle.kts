@@ -1,9 +1,18 @@
 @file:Suppress("UnstableApiUsage")
 
+include(":ml_inference_offloading")
+
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        google()
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
+        }
         mavenCentral()
     }
 }
