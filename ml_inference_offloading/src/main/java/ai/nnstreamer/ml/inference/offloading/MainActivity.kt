@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import ai.nnstreamer.ml.inference.offloading.ui.theme.NnstreamerandroidTheme
+import android.content.Intent
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,5 +25,7 @@ class MainActivity : ComponentActivity() {
                 ) { }
             }
         }
+
+        startForegroundService(Intent(this, MainService::class.java))
     }
 }
