@@ -1,8 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-include(":ml_inference_offloading")
-
-
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -31,3 +28,4 @@ rootProject.name = "nnstreamer-android"
 
 include(":externals")
 include(":nnstreamer-api")
+include(":ml_inference_offloading")
