@@ -6,3 +6,7 @@
 	path = externals/ml-api
 	url = https://github.com/nnstreamer/api
 	branch = main
+[submodule "externals/nnstreamer-edge"]
+	path = externals/nnstreamer-edge
+	url = https://github.com/nnstreamer/nnstreamer-edge
+	branch = main
