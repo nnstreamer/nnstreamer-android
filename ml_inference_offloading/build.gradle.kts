@@ -1,6 +1,6 @@
 plugins {
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
+    id(libs.plugins.androidApplication.get().pluginId)
+    id(libs.plugins.jetbrainsKotlinAndroid.get().pluginId)
 }
 
 android {
