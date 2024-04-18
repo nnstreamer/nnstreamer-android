@@ -34,6 +34,11 @@ tasks {
     val gstVersion = libs.versions.gstreamer.get()
     val gstTarFileName = "gstreamer-1.0-android-universal-$gstVersion.tar"
     val gstAndroidPath = Path("${projectDir}/${project.properties["dir.gstAndroid"].toString()}")
+    val gstAndroidUniversalUrl = "https://gstreamer.freedesktop.org/pkg/android/$gstVersion"
+
+    val fileList = mutableListOf(
+        Triple(gstTarFileName, gstAndroidPath, gstAndroidUniversalUrl)
+    )
 
     fun downloadFile(url: URL, outputFileName: String) {
         url.openStream().use {
@@ -51,41 +56,65 @@ tasks {
         }
     }
 
+    fun prepareTflite() {
+        val tfliteVersion = libs.versions.tensorflowLite.get()
+        val tfliteTarFileName = "tensorflow-lite-$tfliteVersion.tar"
+        val tfliteAndroidPath = Path("${projectDir}/${project.properties["dir.tfliteAndroid"].toString()}")
+        val tfliteUrl = "https://raw.githubusercontent.com/nnstreamer/nnstreamer-android-resource/master/external"
+
+        fileList.add(Triple(tfliteTarFileName, tfliteAndroidPath, tfliteUrl))
+    }
+
     register("prepareDownloadable") {
+        if (project.hasProperty("dir.tfliteAndroid")) {
+            prepareTflite()
+        }
+
         if (!downloadablePath.isDirectory()) {
             downloadablePath.createDirectories()
         }
 
-        //gstreamer-1.0-android-universal
-        val gstXzFileName = "$gstTarFileName.xz"
-        val gstAndroidUniversalUrl = URL("https://gstreamer.freedesktop.org/pkg/android/$gstVersion/$gstXzFileName")
+        for (file in fileList) {
+            val tarFileName = file.first
+            val androidPath = file.second
+            val url = file.third
+            val xzFileName = "$tarFileName.xz"
 
-        if (!Path("$downloadablePath/$gstTarFileName").isRegularFile()) {
-            println("Could not find $gstTarFileName")
-            println("...downloading from https://gstreamer.freedesktop.org/pkg/android")
-            println("This step may take some time to complete...")
-            downloadFile(gstAndroidUniversalUrl, "$downloadablePath/$gstXzFileName")
+            if (!Path("$androidPath").isDirectory()) {
+                println("Could not find $androidPath")
+                println("...downloading from $url")
+                println("This step may take some time to complete...")
+                downloadFile(URL("$url/$xzFileName"), "$downloadablePath/$xzFileName")
 
-            try {
-                File("$downloadablePath/$gstXzFileName").inputStream().buffered().use { bufferedIn ->
-                    XZCompressorInputStream(bufferedIn).toFile("$downloadablePath/$gstTarFileName")
+                try {
+                    File("$downloadablePath/$xzFileName").inputStream().buffered().use { bufferedIn ->
+                        XZCompressorInputStream(bufferedIn).toFile("$downloadablePath/$tarFileName")
+                    }
+                } catch (e: java.io.IOException) {
+                    println("Failed to decompress $downloadablePath/$xzFileName")
+                } finally {
+                    Path("$downloadablePath/xzFileName").deleteIfExists()
                 }
-            } catch (e: java.io.IOException) {
-                println("Failed to decompress $downloadablePath/$gstXzFileName")
-            } finally {
-                Path("$downloadablePath/$gstXzFileName").deleteIfExists()
             }
         }
     }
 
-    register("copyFromTar", Copy::class) {
-        from(tarTree("${downloadablePath.toUri()}/$gstTarFileName"))
-        into(gstAndroidPath)
+    register("copyFromTar") {
+        doLast {
+            for (file in fileList) {
+                val tarFileName = file.first
+                val androidPath = file.second
+                if (!Path("$androidPath").isDirectory()) {
+                    copy {
+                        from(tarTree("${downloadablePath.toUri()}/$tarFileName"))
+                        into(androidPath)
+                    }
+                }
+                Path("$downloadablePath/$tarFileName").deleteIfExists()
+            }
+        }
 
         dependsOn("prepareDownloadable")
-        doLast {
-            Path("$downloadablePath/$gstTarFileName").deleteIfExists()
-        }
     }
 
     register("initGitSubmodules", GitTask::class) {

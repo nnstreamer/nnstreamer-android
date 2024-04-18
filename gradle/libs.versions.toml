@@ -1,5 +1,6 @@
 [versions]
 gstreamer = "1.24.0"
+tensorflowLite = "2.8.1"
 tukaani-xz-plugin = "1.9"
 commons-compress-lib = "1.26.1"
 xyz-simple-git-plugin = "2.0.3"

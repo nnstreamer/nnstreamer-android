@@ -42,3 +42,4 @@ build
 # Ignore 3rd party binaries
 /externals/downloadable
 /externals/gst-1.0-android-universal
+/externals/tensorflow-lite
