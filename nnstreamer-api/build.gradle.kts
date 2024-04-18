@@ -11,7 +11,6 @@ android {
     val externalDirPath by rootProject.extra {
         project.rootDir.toPath().resolve(properties["dir.externals"].toString())
     }
-    val relativePathExternals = projectDir.toPath().relativize(externalDirPath)
 
     namespace = "org.nnsuite.nnstreamer"
     compileSdk = libs.versions.android.compile.sdk.get().toInt()
@@ -31,6 +30,10 @@ android {
                         "ML_API_ROOT=$externalDirPath/ml-api"
                 )
                 targets("nnstreamer-native")
+
+                if (project.hasProperty("dir.tfliteAndroid")) {
+                    arguments("TFLITE_ROOT_ANDROID=$externalDirPath/tensorflow-lite/tensorflow-lite")
+                }
             }
         }
     }
@@ -45,7 +48,7 @@ android {
     }
     externalNativeBuild {
         ndkBuild {
-            path=file("$relativePathExternals/ml-api/java/android/nnstreamer/src/main/jni/Android.mk")
+            path=file(project.projectDir.toPath().resolve("src/main/jni/Android.mk"))
         }
     }
 
@@ -59,7 +62,7 @@ android {
 
     val genNnsSrc = tasks.register("genNnsSrc", Copy::class) {
         val srcDirPath = externalDirPath.resolve("ml-api/java/android/nnstreamer/src/main/java/org/nnsuite/nnstreamer")
-        val outDirPath = project.projectDir.toPath().resolve("src/main/java/org/nnsuite/nnstreamer").apply {
+        val outDirPath = project.projectDir.toPath().resolve("src/main/java/org/nnsuite/nnstreamer/java").apply {
             createDirectories()
         }
 
@@ -89,8 +92,30 @@ android {
     }
 
     tasks {
+        register("genJniSrc", Copy::class) {
+            val srcDirPath = externalDirPath.resolve("ml-api/java/android/nnstreamer/src/main/jni")
+            val outDirPath = project.projectDir.toPath().resolve("src/main/jni").apply {
+                createDirectories()
+            }
+
+            group = BasePlugin.BUILD_GROUP
+            description = "Generates NNStreamer JNI sources"
+
+            from(srcDirPath)
+            into(outDirPath)
+
+            if (project.hasProperty("dir.tfliteAndroid")) {
+                val tfliteVersion = libs.versions.tensorflowLite.get()
+                filter { line: String ->
+                    line.replace("TFLITE_VERSION := 2.8.1", "TFLITE_VERSION := $tfliteVersion")
+                }
+            }
+            filteringCharset = "UTF-8"
+        }
+
         named("preBuild") {
             dependsOn("genNnsSrc")
+            dependsOn("genJniSrc")
         }
     }
 }
