@@ -94,3 +94,25 @@ android {
         }
     }
 }
+
+afterEvaluate {
+    val compileJavaDebug = project.getTasksByName("compileDebugJavaWithJavac", false)
+    val nativeBuildDebug = project.getTasksByName("externalNativeBuildDebug", false)
+
+    if (compileJavaDebug.size >= 1 && nativeBuildDebug.size >= 1) {
+        val compileJavaTask = compileJavaDebug.first()
+        val nativeBuildTask = nativeBuildDebug.first()
+
+        compileJavaTask.dependsOn(nativeBuildTask)
+    }
+
+    val compileJavaRelease = project.getTasksByName("compileReleaseJavaWithJavac", false)
+    val nativeBuildRelease = project.getTasksByName("externalNativeBuildRelease", false)
+
+    if (compileJavaRelease.size >= 1 && nativeBuildRelease.size >= 1) {
+        val compileJavaTask = compileJavaDebug.first()
+        val nativeBuildTask = nativeBuildDebug.first()
+
+        compileJavaTask.dependsOn(nativeBuildTask)
+    }
+}

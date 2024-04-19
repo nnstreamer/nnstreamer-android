@@ -13,10 +13,13 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.Message
 import android.os.Process
+import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import org.nnsuite.nnstreamer.NNStreamer
+
 
 class MainService : Service() {
     private inner class MainHandler(looper: Looper) : Handler(looper) {
@@ -36,6 +39,7 @@ class MainService : Service() {
     private lateinit var serviceHandler : MainHandler
     private lateinit var serviceLooper : Looper
     private lateinit var handlerThread: HandlerThread
+    private var initialized = false
 
     private fun startForeground() {
         // Get NotificationManager
@@ -73,6 +77,11 @@ class MainService : Service() {
    }
 
     override fun onCreate() {
+        initNNStreamer()
+        if (!this.initialized) {
+            Log.e(TAG, "Failed to initialize nnstreamer")
+            stopSelf()
+        }
         handlerThread = HandlerThread("ServiceStartArguments", Process.THREAD_PRIORITY_BACKGROUND).apply {
             start()
         }
@@ -101,5 +110,23 @@ class MainService : Service() {
 
     override fun onDestroy() {
         Toast.makeText(this, "The MainService has been gone", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun initNNStreamer() {
+        if (this.initialized) {
+            return
+        }
+        try {
+            initialized = NNStreamer.initialize(this)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e(TAG, e.message!!)
+        } finally {
+            if (initialized) {
+                Log.i(TAG, "Version: " + NNStreamer.getVersion())
+            } else {
+                Log.e(TAG, "Failed to initialize NNStreamer")
+            }
+        }
     }
 }
