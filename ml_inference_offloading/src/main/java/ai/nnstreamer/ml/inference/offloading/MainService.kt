@@ -7,6 +7,7 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.os.Binder
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
@@ -35,12 +36,16 @@ class MainService : Service() {
         }
     }
 
+    inner class LocalBinder : Binder() {
+        fun getService(): MainService = this@MainService
+    }
+
     private val TAG = "MainService"
+    private val binder = LocalBinder()
     private lateinit var serviceHandler : MainHandler
     private lateinit var serviceLooper : Looper
     private lateinit var handlerThread: HandlerThread
     private var initialized = false
-
     private fun startForeground() {
         // Get NotificationManager
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -105,7 +110,7 @@ class MainService : Service() {
     }
 
     override fun onBind(intent: Intent): IBinder {
-        TODO("Return the communication channel to the service.")
+        return binder
     }
 
     override fun onDestroy() {
@@ -128,5 +133,13 @@ class MainService : Service() {
                 Log.e(TAG, "Failed to initialize NNStreamer")
             }
         }
+    }
+
+    fun startServer() {
+        TODO("Not yet implemented")
+    }
+
+    fun stopServer() {
+        TODO("Not yet implemented")
     }
 }
