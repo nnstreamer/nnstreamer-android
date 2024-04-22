@@ -92,5 +92,20 @@ android {
         named("preBuild") {
             dependsOn("genNnsSrc")
         }
+
+        build {
+            doLast{
+                copy {
+                    val srcAarPath = project.projectDir.toPath().resolve("build/outputs/aar")
+                    val outAarPath = externalDirPath.resolve("libs").apply {
+                        createDirectories()
+                    }
+
+                    from(srcAarPath)
+                    include("*-debug.aar")
+                    into(outAarPath)
+                }
+            }
+        }
     }
 }
