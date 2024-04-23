@@ -83,6 +83,9 @@ tasks {
         into(gstAndroidPath)
 
         dependsOn("prepareDownloadable")
+        doLast {
+            Path("$downloadablePath/$gstTarFileName").deleteIfExists()
+        }
     }
 
     register("initGitSubmodules", GitTask::class) {
