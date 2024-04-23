@@ -25,9 +25,9 @@ jobs:
         distribution: 'temurin'
         java-version: 17
     - name: Setup Gradle
-      uses: gradle/gradle-build-action@v3
-      with:
-        arguments: build
+      uses: gradle/actions/setup-gradle@v3
+    - name: Run build
+      run: ./gradlew build
     - name: Upload nnstreamer-api aar
       uses: actions/upload-artifact@v4
       with:
