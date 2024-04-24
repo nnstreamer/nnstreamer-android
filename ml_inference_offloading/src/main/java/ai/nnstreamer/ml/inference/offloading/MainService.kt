@@ -20,6 +20,13 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import org.nnsuite.nnstreamer.NNStreamer
+import org.nnsuite.nnstreamer.Pipeline
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
+import java.net.ServerSocket
+import kotlin.concurrent.thread
 
 
 class MainService : Service() {
@@ -41,11 +48,17 @@ class MainService : Service() {
     }
 
     private val TAG = "MainService"
+    // todo: Use internal network only now
+    private val HOST_ADDR = "192.168.50.191"
     private val binder = LocalBinder()
     private lateinit var serviceHandler : MainHandler
     private lateinit var serviceLooper : Looper
     private lateinit var handlerThread: HandlerThread
     private var initialized = false
+    private var port = -1
+    private lateinit var tensorQueryServer: Pipeline
+    private lateinit var model: File
+
     private fun startForeground() {
         // Get NotificationManager
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -87,6 +100,10 @@ class MainService : Service() {
             Log.e(TAG, "Failed to initialize nnstreamer")
             stopSelf()
         }
+        copyFilesToExternalDir()
+
+        val path = getExternalFilesDir(null)!!.absolutePath
+        model = File("$path/mobilenet_v1_1.0_224_quant.tflite")
         handlerThread = HandlerThread("ServiceStartArguments", Process.THREAD_PRIORITY_BACKGROUND).apply {
             start()
         }
@@ -117,6 +134,43 @@ class MainService : Service() {
         Toast.makeText(this, "The MainService has been gone", Toast.LENGTH_SHORT).show()
     }
 
+    private fun copyFilesToExternalDir() {
+        val am = resources.assets
+        var files: Array<String>? = null
+
+        try {
+            files = am.list("models/")
+        } catch (e: java.lang.Exception) {
+            Log.e(TAG, "#### Failed to get asset file list")
+            e.printStackTrace()
+            return
+        }
+
+        // Copy files into app-specific directory.
+        for (filename in files!!) {
+            try {
+                val inFile = am.open("models/$filename")
+                val outDir = getExternalFilesDir(null)!!.absolutePath
+                val outFile = File(outDir, filename)
+                val out: OutputStream = FileOutputStream(outFile)
+
+                val buffer = ByteArray(1024)
+                var read: Int
+                while ((inFile.read(buffer).also { read = it }) != -1) {
+                    out.write(buffer, 0, read)
+                }
+
+                inFile.close()
+                out.flush()
+                out.close()
+            } catch (e: IOException) {
+                Log.e(TAG, "Failed to copy file: $filename")
+                e.printStackTrace()
+                return
+            }
+        }
+    }
+
     private fun initNNStreamer() {
         if (this.initialized) {
             return
@@ -135,11 +189,55 @@ class MainService : Service() {
         }
     }
 
+    private fun isPortAvailable(port: Int): Boolean {
+        var result = false
+        if (port < 0) {
+            return result
+        }
+
+        val portChecker = thread() {
+            try {
+                val serverSocket = ServerSocket(port)
+                serverSocket.close()
+                result = true
+            } catch (e: Exception) {
+                Log.e(TAG, e.toString())
+            }
+        }
+        portChecker.join()
+        return result
+    }
+
+    private fun findPort(): Int {
+        var port = -1
+        val portFinder = thread() {
+            try {
+                val serverSocket = ServerSocket(0)
+                Log.i(TAG, "listening on port: " + serverSocket.localPort)
+                port = serverSocket.localPort
+                serverSocket.close()
+            } catch (e: Exception) {
+                Log.e(TAG, e.toString())
+            }
+        }
+        portFinder.join()
+        return port
+    }
+
     fun startServer() {
-        TODO("Not yet implemented")
+        if (!isPortAvailable(port)) {
+            port = findPort()
+        }
+
+        val desc = "tensor_query_serversrc host=" + HOST_ADDR + " port=" + port.toString() + " ! " +
+                "other/tensor,format=static,dimension=(string)3:224:224:1,type=uint8,framerate=0/1 ! " +
+                "tensor_filter framework=tensorflow-lite model=" + model.getAbsolutePath() + " ! " +
+                "other/tensor,format=static,dimension=(string)1001:1,type=uint8,framerate=0/1 ! tensor_query_serversink async=false"
+        tensorQueryServer = Pipeline(desc, null)
+        tensorQueryServer.start()
     }
 
     fun stopServer() {
-        TODO("Not yet implemented")
+        tensorQueryServer.close()
     }
 }
