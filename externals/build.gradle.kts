@@ -93,7 +93,7 @@ tasks {
                 } catch (e: java.io.IOException) {
                     println("Failed to decompress $downloadablePath/$xzFileName")
                 } finally {
-                    Path("$downloadablePath/xzFileName").deleteIfExists()
+                    Path("$downloadablePath/$xzFileName").deleteIfExists()
                 }
             }
         }
