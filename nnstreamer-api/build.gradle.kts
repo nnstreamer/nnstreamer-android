@@ -32,7 +32,7 @@ android {
                 targets("nnstreamer-native")
 
                 if (project.hasProperty("dir.tfliteAndroid")) {
-                    arguments("TFLITE_ROOT_ANDROID=$externalDirPath/tensorflow-lite/tensorflow-lite")
+                    arguments("TFLITE_ROOT_ANDROID=$externalDirPath/tensorflow-lite")
                 }
             }
         }
