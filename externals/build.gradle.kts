@@ -161,9 +161,22 @@ tasks {
         args = listOf("git checkout .") // The git command arguments
         dependsOn("updateGitSubmodules")
     }
+
+    register("cleanAll", Delete::class) {
+        delete(downloadablePath)
+        for (downloadble in downloadables) {
+            val (_, targetDir, _) = downloadble
+
+            delete(projectDir.toPath().resolve(targetDir))
+        }
+
+        dependsOn("clean")
+    }
 }
 
 tasks.named("build") {
     dependsOn("copyFromTar")
     dependsOn("checkoutGitSubmodules")
 }
+
+
