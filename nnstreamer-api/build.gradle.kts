@@ -118,6 +118,17 @@ android {
             dependsOn("genNnsSrc")
             dependsOn("genJniSrc")
         }
+
+        register("cleanAll", Delete::class) {
+            val generatedDirs = listOf("gst-android-build", "src")
+
+            for (genDir in generatedDirs) {
+                project.projectDir.toPath().resolve(genDir).apply {
+                    delete(this)
+                }
+            }
+            dependsOn("clean")
+        }
     }
 }
 
