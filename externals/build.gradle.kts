@@ -11,19 +11,6 @@ apply {
     plugin(libs.plugins.xyz.simple.git.get().pluginId)
 }
 
-buildscript {
-    dependencies {
-        classpath(libs.commons.compress)
-        classpath(libs.tukaani.xz)
-    }
-
-    repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
-}
-
 tasks {
     fun downloadFile(url: URL, outputFileName: String) {
         url.openStream().use {
@@ -178,5 +165,3 @@ tasks.named("build") {
     dependsOn("copyFromTar")
     dependsOn("checkoutGitSubmodules")
 }
-
-
