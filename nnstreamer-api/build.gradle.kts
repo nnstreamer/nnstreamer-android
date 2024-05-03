@@ -61,8 +61,9 @@ android {
     }
 
     val genNnsSrc = tasks.register("genNnsSrc", Copy::class) {
-        val srcDirPath = externalDirPath.resolve("ml-api/java/android/nnstreamer/src/main/java/org/nnsuite/nnstreamer")
-        val outDirPath = project.projectDir.toPath().resolve("src/main/java/org/nnsuite/nnstreamer/java").apply {
+        val commonSuffix = "src/main/java/org/nnsuite/nnstreamer"
+        val srcDirPath = externalDirPath.resolve("ml-api/java/android/nnstreamer").resolve(commonSuffix)
+        val outDirPath = project.projectDir.toPath().resolve(commonSuffix).apply {
             createDirectories()
         }
 
