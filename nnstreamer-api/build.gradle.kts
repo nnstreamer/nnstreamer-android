@@ -121,23 +121,15 @@ android {
 }
 
 afterEvaluate {
-    val compileJavaDebug = project.getTasksByName("compileDebugJavaWithJavac", false)
-    val nativeBuildDebug = project.getTasksByName("externalNativeBuildDebug", false)
+    listOf("Debug", "Release").forEach { buildType ->
+        val compileJavaWithJavacTask = project.getTasksByName("compile${buildType}JavaWithJavac", false)
+        val externalNativeBuildTask = project.getTasksByName("externalNativeBuild${buildType}", false)
 
-    if (compileJavaDebug.size >= 1 && nativeBuildDebug.size >= 1) {
-        val compileJavaTask = compileJavaDebug.first()
-        val nativeBuildTask = nativeBuildDebug.first()
+        if (compileJavaWithJavacTask.size >= 1 && externalNativeBuildTask.size >= 1) {
+            val compileJavaTask = compileJavaWithJavacTask.first()
+            val nativeBuildTask = externalNativeBuildTask.first()
 
-        compileJavaTask.dependsOn(nativeBuildTask)
-    }
-
-    val compileJavaRelease = project.getTasksByName("compileReleaseJavaWithJavac", false)
-    val nativeBuildRelease = project.getTasksByName("externalNativeBuildRelease", false)
-
-    if (compileJavaRelease.size >= 1 && nativeBuildRelease.size >= 1) {
-        val compileJavaTask = compileJavaDebug.first()
-        val nativeBuildTask = nativeBuildDebug.first()
-
-        compileJavaTask.dependsOn(nativeBuildTask)
+            compileJavaTask.dependsOn(nativeBuildTask)
+        }
     }
 }
