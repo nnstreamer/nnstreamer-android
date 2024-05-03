@@ -11,6 +11,8 @@ android {
     val externalDirPath by rootProject.extra {
         project.rootDir.toPath().resolve(properties["dir.externals"].toString())
     }
+    val mlApiRootPath = externalDirPath.resolve("ml-api")
+    val mlApiNNSJniPath = mlApiRootPath.resolve("java/android/nnstreamer/src/main/jni")
 
     namespace = "org.nnsuite.nnstreamer"
     compileSdk = libs.versions.android.compile.sdk.get().toInt()
@@ -22,17 +24,20 @@ android {
             ndkBuild {
                 abiFilters("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
                 arguments("NDK_PROJECT_PATH=./",
-                        "NDK_APPLICATION_MK=$externalDirPath/ml-api/java/android/nnstreamer/src/main/jni/Application.mk",
+                        "NDK_APPLICATION_MK=$mlApiNNSJniPath/Application.mk",
                         "GSTREAMER_JAVA_SRC_DIR=src/main/java",
                         "GSTREAMER_ROOT_ANDROID=$externalDirPath/gst-1.0-android-universal",
                         "NNSTREAMER_ROOT=$externalDirPath/nnstreamer",
                         "NNSTREAMER_EDGE_ROOT=$externalDirPath/nnstreamer-edge",
-                        "ML_API_ROOT=$externalDirPath/ml-api"
+                        "ML_API_ROOT=$mlApiRootPath"
                 )
                 targets("nnstreamer-native")
 
                 if (project.hasProperty("dir.tfliteAndroid")) {
+                    val tfliteVersion = libs.versions.tensorflowLite.get()
+
                     arguments("TFLITE_ROOT_ANDROID=$externalDirPath/tensorflow-lite")
+                    arguments("TFLITE_VERSION=$tfliteVersion")
                 }
             }
         }
@@ -48,7 +53,7 @@ android {
     }
     externalNativeBuild {
         ndkBuild {
-            path=file(project.projectDir.toPath().resolve("src/main/jni/Android.mk"))
+            path=file(mlApiNNSJniPath.resolve("Android.mk"))
         }
     }
 
@@ -93,30 +98,8 @@ android {
     }
 
     tasks {
-        register("genJniSrc", Copy::class) {
-            val srcDirPath = externalDirPath.resolve("ml-api/java/android/nnstreamer/src/main/jni")
-            val outDirPath = project.projectDir.toPath().resolve("src/main/jni").apply {
-                createDirectories()
-            }
-
-            group = BasePlugin.BUILD_GROUP
-            description = "Generates NNStreamer JNI sources"
-
-            from(srcDirPath)
-            into(outDirPath)
-
-            if (project.hasProperty("dir.tfliteAndroid")) {
-                val tfliteVersion = libs.versions.tensorflowLite.get()
-                filter { line: String ->
-                    line.replace("TFLITE_VERSION := 2.8.1", "TFLITE_VERSION := $tfliteVersion")
-                }
-            }
-            filteringCharset = "UTF-8"
-        }
-
         named("preBuild") {
             dependsOn("genNnsSrc")
-            dependsOn("genJniSrc")
         }
     }
 }
