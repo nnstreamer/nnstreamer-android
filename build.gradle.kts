@@ -10,3 +10,10 @@ buildscript {
         classpath(libs.tukaani.xz)
     }
 }
+
+tasks {
+    register("cleanAll") {
+        dependsOn("nnstreamer-api:cleanAll")
+        dependsOn("externals:cleanAll")
+    }
+}
