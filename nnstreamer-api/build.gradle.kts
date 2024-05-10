@@ -1,6 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 
 plugins {
@@ -11,7 +10,17 @@ android {
     val externalDirPath by rootProject.extra {
         project.rootDir.toPath().resolve(properties["dir.externals"].toString())
     }
-    val mlApiRootPath = externalDirPath.resolve("ml-api")
+    val gstDir = properties["dir.gstAndroid"].toString()
+    val gstRootPath = externalDirPath.resolve(gstDir)
+
+    val nnsDir = properties["dir.nnstreamer"].toString()
+    val nnsRootPath = externalDirPath.resolve(nnsDir)
+
+    val nnsEdgeDir = properties["dir.nnstreamerEdge"].toString()
+    val nnsEdgeRootPath = externalDirPath.resolve(nnsEdgeDir)
+
+    val mlApiDir = properties["dir.mlApi"].toString()
+    val mlApiRootPath = externalDirPath.resolve(mlApiDir)
     val mlApiNNSJniPath = mlApiRootPath.resolve("java/android/nnstreamer/src/main/jni")
 
     namespace = "org.nnsuite.nnstreamer"
@@ -26,17 +35,19 @@ android {
                 arguments("NDK_PROJECT_PATH=./",
                         "NDK_APPLICATION_MK=$mlApiNNSJniPath/Application.mk",
                         "GSTREAMER_JAVA_SRC_DIR=src/main/java",
-                        "GSTREAMER_ROOT_ANDROID=$externalDirPath/gst-1.0-android-universal",
-                        "NNSTREAMER_ROOT=$externalDirPath/nnstreamer",
-                        "NNSTREAMER_EDGE_ROOT=$externalDirPath/nnstreamer-edge",
+                        "GSTREAMER_ROOT_ANDROID=$gstRootPath",
+                        "NNSTREAMER_ROOT=$nnsRootPath",
+                        "NNSTREAMER_EDGE_ROOT=$nnsEdgeRootPath",
                         "ML_API_ROOT=$mlApiRootPath"
                 )
                 targets("nnstreamer-native")
 
                 if (project.hasProperty("dir.tfliteAndroid")) {
+                    val tfliteDir = properties["dir.tfliteAndroid"].toString()
+                    val tfliteRootPath = externalDirPath.resolve(tfliteDir)
                     val tfliteVersion = libs.versions.tensorflowLite.get()
 
-                    arguments("TFLITE_ROOT_ANDROID=$externalDirPath/tensorflow-lite")
+                    arguments("TFLITE_ROOT_ANDROID=$tfliteRootPath")
                     arguments("TFLITE_VERSION=$tfliteVersion")
                 }
             }
