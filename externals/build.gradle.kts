@@ -6,9 +6,9 @@ import kotlin.io.path.Path
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
 import xyz.ronella.gradle.plugin.simple.git.task.*
 
-apply {
-    plugin("base")
-    plugin(libs.plugins.xyz.simple.git.get().pluginId)
+plugins {
+    base
+    id(libs.plugins.xyz.simple.git.get().pluginId)
 }
 
 tasks {
@@ -26,7 +26,7 @@ tasks {
         File(filePath).outputStream().use { fileOutput -> this.copyTo(fileOutput) }
     }
 
-    val downloadablePath = Path("${projectDir}/${project.properties["dir.downloadable"].toString()}")
+    val downloadablePath = Path("$projectDir/${project.properties["dir.downloadable"]}")
 
     //FIXME Revise project.properties
     // - remove dir.gstAndroid/dir.tfliteAndroid if not necessary
