@@ -56,12 +56,13 @@ tasks {
 
     // TensorFlow Lite
     val tfliteVersion = libs.versions.tensorflowLite.get()
+    val enabledTFLite = project.hasProperty("dir.tfliteAndroid")
     val tfliteDownloadable =
         Downloadable(
             "tensorflow-lite-$tfliteVersion.tar",
             project.properties["dir.tfliteAndroid"].toString(),
             "https://raw.githubusercontent.com/nnstreamer/nnstreamer-android-resource/master/external",
-            true,
+            enabledTFLite,
             ".xz"
         )
     downloadables.add(tfliteDownloadable)
