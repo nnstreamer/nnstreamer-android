@@ -1,6 +1,9 @@
 name: Android Build Test
 
 on:
+  schedule:
+    # 05:00 AM (KST) Mon-Fri
+    - cron: "00 20 * * 0-4"
   push:
     branches: [ main ]
   pull_request:
@@ -53,3 +56,8 @@ jobs:
       with:
         name: nnstreamer-api-aar
         path: nnstreamer-api/build/outputs/aar/*
+    - name: Upload ml_inference_offloading apk
+      uses: actions/upload-artifact@v4
+      with:
+        name: ml-inference-offloading-apk
+        path: ml_inference_offloading/build/outputs/apk/*/*.apk
