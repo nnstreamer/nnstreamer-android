@@ -7,6 +7,7 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.net.ConnectivityManager
 import android.os.Binder
 import android.os.Handler
 import android.os.HandlerThread
@@ -25,6 +26,8 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
+import java.net.Inet4Address
+import java.net.InetAddress
 import java.net.ServerSocket
 import kotlin.concurrent.thread
 
@@ -48,8 +51,6 @@ class MainService : Service() {
     }
 
     private val TAG = "MainService"
-    // todo: Use internal network only now
-    private val HOST_ADDR = "192.168.50.191"
     private val binder = LocalBinder()
     private lateinit var serviceHandler : MainHandler
     private lateinit var serviceLooper : Looper
@@ -208,6 +209,21 @@ class MainService : Service() {
         return result
     }
 
+    private fun getIpAddress(): String? {
+        val connectivityManager = applicationContext.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork
+        val linkProperties = connectivityManager.getLinkProperties(network)
+        val linkAddresses = linkProperties?.linkAddresses
+        linkAddresses?.forEach {linkAddress ->
+            val inetAddress = linkAddress.address
+            if (inetAddress is Inet4Address && !inetAddress.isLoopbackAddress && inetAddress.isSiteLocalAddress) {
+                return inetAddress.hostAddress
+            }
+        }
+
+        return "localhost"
+    }
+
     private fun findPort(): Int {
         var port = -1
         val portFinder = thread() {
@@ -225,11 +241,12 @@ class MainService : Service() {
     }
 
     fun startServer() {
+        val hostAddress = getIpAddress()
         if (!isPortAvailable(port)) {
             port = findPort()
         }
 
-        val desc = "tensor_query_serversrc host=" + HOST_ADDR + " port=" + port.toString() + " ! " +
+        val desc = "tensor_query_serversrc host=" + hostAddress + " port=" + port.toString() + " ! " +
                 "other/tensor,format=static,dimension=(string)3:224:224:1,type=uint8,framerate=0/1 ! " +
                 "tensor_filter framework=tensorflow-lite model=" + model.getAbsolutePath() + " ! " +
                 "other/tensor,format=static,dimension=(string)1001:1,type=uint8,framerate=0/1 ! tensor_query_serversink async=false"
