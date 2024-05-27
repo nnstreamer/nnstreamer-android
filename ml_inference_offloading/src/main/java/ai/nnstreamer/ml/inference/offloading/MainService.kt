@@ -232,19 +232,28 @@ class MainService : Service() {
         return result
     }
 
-    private fun getIpAddress(): String? {
-        val connectivityManager = applicationContext.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+    // TODO: Add an ApplicationContext Parameter
+    private fun getIpAddress(): String {
+        val connectivityManager = App.context().getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = connectivityManager.activeNetwork
-        val linkProperties = connectivityManager.getLinkProperties(network)
-        val linkAddresses = linkProperties?.linkAddresses
-        linkAddresses?.forEach {linkAddress ->
-            val inetAddress = linkAddress.address
-            if (inetAddress is Inet4Address && !inetAddress.isLoopbackAddress && inetAddress.isSiteLocalAddress) {
-                return inetAddress.hostAddress
+        var inetAddress = if (isRunningOnEmulator) "10.0.2.2" else "localhost"
+        val linkProperties = connectivityManager.getLinkProperties(network) ?: return inetAddress
+
+        for (linkAddress in linkProperties.linkAddresses) {
+            val address = linkAddress.address ?: continue
+
+            when {
+                address !is Inet4Address -> continue
+                address.isLoopbackAddress -> continue
+                else -> {
+                    inetAddress = address.hostAddress?:continue
+
+                    break
+                }
             }
         }
 
-        return "localhost"
+        return inetAddress
     }
 
     private fun findPort(): Int {
