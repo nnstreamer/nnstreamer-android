@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.IBinder
 import android.view.View
 import android.widget.Button
+import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,7 +49,9 @@ class MainActivity : ComponentActivity() {
 
         val start = findViewById<Button>(R.id.start)
         start.setOnClickListener(View.OnClickListener {
-            mService?.startServer()
+            val serverPort = mService?.startServer()
+            val portTextView = findViewById<TextView>(R.id.port)
+            portTextView.text = "Listening on port: " + serverPort.toString();
         })
 
         val stop = findViewById<Button>(R.id.stop)
