@@ -16,6 +16,7 @@ import android.os.Looper
 import android.os.Message
 import android.os.Process
 import android.util.Log
+import android.widget.Button
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
@@ -240,7 +241,7 @@ class MainService : Service() {
         return port
     }
 
-    fun startServer() {
+    fun startServer(): Int {
         val hostAddress = getIpAddress()
         if (!isPortAvailable(port)) {
             port = findPort()
@@ -252,6 +253,8 @@ class MainService : Service() {
                 "other/tensor,format=static,dimension=(string)1001:1,type=uint8,framerate=0/1 ! tensor_query_serversink async=false"
         tensorQueryServer = Pipeline(desc, null)
         tensorQueryServer.start()
+
+        return port
     }
 
     fun stopServer() {
