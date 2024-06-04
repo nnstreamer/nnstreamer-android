@@ -1,9 +1,17 @@
 import java.io.FileOutputStream
+import java.io.IOException
 import java.net.URL
 import java.nio.channels.Channels
-import kotlin.io.path.*
+import java.security.MessageDigest
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.exists
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.isDirectory
 import kotlin.io.path.Path
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
+import org.jetbrains.kotlin.daemon.common.toHexString
 import xyz.ronella.gradle.plugin.simple.git.task.*
 
 plugins {
@@ -12,6 +20,13 @@ plugins {
 }
 
 tasks {
+    fun File.sha256sum(): String {
+        val sha256sum = MessageDigest.getInstance("SHA-256")
+        val digest = sha256sum.digest(this.readBytes())
+
+        return digest.toHexString()
+    }
+
     fun downloadFile(url: URL, outputFileName: String) {
         url.openStream().use {
             Channels.newChannel(it).use { rbc ->
@@ -38,6 +53,7 @@ tasks {
         val url: String,
         val enabled: Boolean,
         val downloadableFormat: String = "",
+        val digestFileName: String = ""
     )
 
     val downloadables = mutableListOf<Downloadable>()
@@ -50,7 +66,8 @@ tasks {
             project.properties["dir.gstAndroid"].toString(),
             "https://gstreamer.freedesktop.org/pkg/android/$gstVersion",
             true,
-            ".xz"
+            ".xz",
+            "gstreamer-1.0-android-universal-$gstVersion.tar.xz.sha256sum"
         )
     downloadables.add(gstDownloadable)
 
@@ -75,10 +92,10 @@ tasks {
         }
 
         for (downloadble in downloadables) {
-            val (tarFileName, targetDir, url) = downloadble
+            val (tarFileName, targetDir, url, isEnabled, downloadableFormat, digestFileName) = downloadble
             val targetPath = projectDir.toPath().resolve(targetDir)
 
-            if (targetPath.isDirectory()) {
+            if (!isEnabled || targetPath.isDirectory()) {
                 continue
             }
 
@@ -86,8 +103,29 @@ tasks {
             println("...downloading from $url")
             println("This step may take some time to complete...")
 
-            val downloadbleName = "$tarFileName${downloadble.downloadableFormat}"
+            val downloadbleName = "$tarFileName$downloadableFormat"
             downloadFile(URL("$url/$downloadbleName"), downloadablePath.resolve(downloadbleName).toString())
+
+            val verified = if (digestFileName.isEmpty().or(digestFileName.isBlank())) {
+                true
+            } else {
+                val path = downloadablePath.resolve(digestFileName)
+                val fileNameToHashMap: MutableMap<String, String> = mutableMapOf()
+
+                downloadFile(URL("$url/$digestFileName"), path.toString())
+
+                path.toFile().forEachLine { line ->
+                    val (hash, filename) = line.split("\\s+".toRegex())
+
+                    fileNameToHashMap[filename] = hash
+                }
+                //FIXME Support other algorithms such as MD5, sha512
+                fileNameToHashMap[downloadbleName] == File("$downloadablePath/$downloadbleName").sha256sum()
+            }
+
+            if (!verified) {
+                throw IOException("Failed to verify the integrity of the downloaded file: $downloadbleName")
+            }
 
             when {
                 downloadbleName.endsWith(".xz") -> {
@@ -96,7 +134,7 @@ tasks {
                             XZCompressorInputStream(bufferedIn).toFile("$downloadablePath/$tarFileName")
                         }
                         downloadablePath.resolve(downloadbleName).deleteIfExists()
-                    } catch (e: java.io.IOException) {
+                    } catch (e: IOException) {
                         println("Failed to decompress $downloadablePath/$downloadbleName")
                     }
                 }
