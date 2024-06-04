@@ -91,8 +91,8 @@ tasks {
             downloadablePath.createDirectories()
         }
 
-        for (downloadble in downloadables) {
-            val (tarFileName, targetDir, url, isEnabled, downloadableFormat, digestFileName) = downloadble
+        for (downloadable in downloadables) {
+            val (tarFileName, targetDir, url, isEnabled, downloadableFormat, digestFileName) = downloadable
             val targetPath = projectDir.toPath().resolve(targetDir)
 
             if (!isEnabled || targetPath.isDirectory()) {
@@ -103,8 +103,8 @@ tasks {
             println("...downloading from $url")
             println("This step may take some time to complete...")
 
-            val downloadbleName = "$tarFileName$downloadableFormat"
-            downloadFile(URL("$url/$downloadbleName"), downloadablePath.resolve(downloadbleName).toString())
+            val downloadableName = "$tarFileName$downloadableFormat"
+            downloadFile(URL("$url/$downloadableName"), downloadablePath.resolve(downloadableName).toString())
 
             val verified = if (digestFileName.isEmpty().or(digestFileName.isBlank())) {
                 true
@@ -120,22 +120,22 @@ tasks {
                     fileNameToHashMap[filename] = hash
                 }
                 //FIXME Support other algorithms such as MD5, sha512
-                fileNameToHashMap[downloadbleName] == File("$downloadablePath/$downloadbleName").sha256sum()
+                fileNameToHashMap[downloadableName] == File("$downloadablePath/$downloadableName").sha256sum()
             }
 
             if (!verified) {
-                throw IOException("Failed to verify the integrity of the downloaded file: $downloadbleName")
+                throw IOException("Failed to verify the integrity of the downloaded file: $downloadableName")
             }
 
             when {
-                downloadbleName.endsWith(".xz") -> {
+                downloadableName.endsWith(".xz") -> {
                     try {
-                        File("$downloadablePath/$downloadbleName").inputStream().buffered().use { bufferedIn ->
+                        File("$downloadablePath/$downloadableName").inputStream().buffered().use { bufferedIn ->
                             XZCompressorInputStream(bufferedIn).toFile("$downloadablePath/$tarFileName")
                         }
-                        downloadablePath.resolve(downloadbleName).deleteIfExists()
+                        downloadablePath.resolve(downloadableName).deleteIfExists()
                     } catch (e: IOException) {
-                        println("Failed to decompress $downloadablePath/$downloadbleName")
+                        println("Failed to decompress $downloadablePath/$downloadableName")
                     }
                 }
             }
