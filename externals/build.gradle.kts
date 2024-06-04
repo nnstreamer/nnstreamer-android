@@ -138,17 +138,17 @@ tasks {
     //TODO Use a specific commit ID or TAG
     register("initGitSubmodules", GitTask::class) { command = "submodule init" }
 
-    register("updateGitSubmodules", GitTask::class) {
-        command = "submodule update"
-
-        dependsOn("initGitSubmodules")
-    }
-
     register("checkoutGitSubmodules", GitTask::class) {
         command = "submodule foreach"
         args = listOf("git checkout .") // The git command arguments
-        dependsOn("updateGitSubmodules")
+        dependsOn("initGitSubmodules")
     }
+
+    register("updateGitSubmodules", GitTask::class) {
+        command = "submodule update --remote --recursive"
+        dependsOn("checkoutGitSubmodules")
+    }
+
 
     register("cleanAll", Delete::class) {
         delete(downloadablePath)
@@ -164,5 +164,5 @@ tasks {
 
 tasks.named("build") {
     dependsOn("copyFromTar")
-    dependsOn("checkoutGitSubmodules")
+    dependsOn("updateGitSubmodules")
 }
