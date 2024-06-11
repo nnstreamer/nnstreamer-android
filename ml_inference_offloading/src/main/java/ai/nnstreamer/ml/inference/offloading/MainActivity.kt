@@ -8,7 +8,9 @@ import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
@@ -17,17 +19,56 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
 
+// todo: Define DTO with generality and extensibility
+data class ModelInfo(
+    val name: String,
+    val filter: String
+)
+
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
     private var mService: MainService? = null
 
-    private val connection = object : ServiceConnection {
+    inner class ModelViewHolder(itemView: View) :
+        RecyclerView.ViewHolder(itemView) {
+        fun bind(info: ModelInfo) {
+            val start = itemView.findViewById<Button>(R.id.start)
+            val stop = itemView.findViewById<Button>(R.id.stop)
+            val port = itemView.findViewById<TextView>(R.id.port)
 
+            start.setOnClickListener(View.OnClickListener {
+                val serverPort = mService?.startServer(info.name, info.filter)
+                port.text = "Listening on port: " + serverPort.toString();
+            })
+            stop.setOnClickListener(View.OnClickListener {
+                mService?.stopServer(info.name)
+            })
+        }
+    }
+
+    inner class ModelAdapter(private val modelInfos: ArrayList<ModelInfo>) : RecyclerView.Adapter<ModelViewHolder>() {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ModelViewHolder {
+            val inflater = LayoutInflater.from(parent.context)
+            val view = inflater.inflate(R.layout.models, parent, false)
+
+            return ModelViewHolder(view)
+        }
+
+        override fun onBindViewHolder(holder: ModelViewHolder, position: Int) {
+            holder.bind(modelInfos[position])
+        }
+
+        override fun getItemCount(): Int = modelInfos.size
+    }
+
+    private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             val binder = service as MainService.LocalBinder
             mService = binder.getService()
@@ -90,22 +131,20 @@ class MainActivity : ComponentActivity() {
         copyFilesToExternalDir()
         startForegroundService(Intent(this, MainService::class.java))
 
-        val start = findViewById<Button>(R.id.start)
-        start.setOnClickListener(View.OnClickListener {
-            val path = getExternalFilesDir(null)!!.absolutePath
-            val model = File("$path/mobilenet_v1_1.0_224_quant.tflite")
-            val filter = "other/tensor,format=static,dimension=(string)3:224:224:1,type=uint8,framerate=0/1 ! " +
-                    "tensor_filter framework=tensorflow-lite model=" + model.getAbsolutePath() + " ! " +
-                    "other/tensor,format=static,dimension=(string)1001:1,type=uint8,framerate=0/1"
-            val serverPort = mService?.startServer(filter)
-            val portTextView = findViewById<TextView>(R.id.port)
-            portTextView.text = "Listening on port: " + serverPort.toString();
-        })
+        // todo: Use database instead of just ArrayList
+        val modelList = ArrayList<ModelInfo>()
+        val path = getExternalFilesDir(null)!!.absolutePath
+        val mobileNet = File("$path/mobilenet_v1_1.0_224_quant.tflite")
+        val filter = "other/tensor,format=static,dimension=(string)3:224:224:1,type=uint8,framerate=0/1 ! " +
+                "tensor_filter framework=tensorflow-lite model=" + mobileNet.getAbsolutePath() + " ! " +
+                "other/tensor,format=static,dimension=(string)1001:1,type=uint8,framerate=0/1"
 
-        val stop = findViewById<Button>(R.id.stop)
-        stop.setOnClickListener(View.OnClickListener {
-            mService?.stopServer()
-        })
+        val mobileNetInfo = ModelInfo("MobileNet", filter)
+        modelList.add(mobileNetInfo)
+
+        val recyclerView = findViewById<RecyclerView>(R.id.model_list)
+        recyclerView.adapter = ModelAdapter(modelList)
+        recyclerView.layoutManager = LinearLayoutManager(this, )
     }
 
     override fun onStart() {

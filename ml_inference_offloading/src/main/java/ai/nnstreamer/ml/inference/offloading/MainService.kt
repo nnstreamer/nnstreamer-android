@@ -74,7 +74,7 @@ class MainService : Service() {
     private lateinit var handlerThread: HandlerThread
     private var initialized = false
     private var port = -1
-    private lateinit var tensorQueryServer: Pipeline
+    private var serverInfo = mutableMapOf<String,Pipeline>()
 
     private fun startForeground() {
         // Get NotificationManager
@@ -145,6 +145,9 @@ class MainService : Service() {
     }
 
     override fun onDestroy() {
+        serverInfo.values.forEach { pipeline ->
+            pipeline.close()
+        }
         Toast.makeText(this, "The MainService has been gone", Toast.LENGTH_SHORT).show()
     }
 
@@ -225,21 +228,22 @@ class MainService : Service() {
         return port
     }
 
-    fun startServer(filter: String): Int {
+    fun startServer(name:String, filter: String): Int {
         val hostAddress = getIpAddress()
         if (!isPortAvailable(port)) {
             port = findPort()
         }
 
-        val desc = "tensor_query_serversrc host=" + hostAddress + " port=" + port.toString() + " ! " +
-                filter + " ! tensor_query_serversink async=false"
-        tensorQueryServer = Pipeline(desc, null)
+        val desc = "tensor_query_serversrc host=" + hostAddress + " port=" + port.toString() +
+                " ! " + filter + " ! tensor_query_serversink async=false"
+        val tensorQueryServer = Pipeline(desc, null)
+        serverInfo[name] = tensorQueryServer
         tensorQueryServer.start()
 
         return port
     }
 
-    fun stopServer() {
-        tensorQueryServer.close()
+    fun stopServer(name:String) {
+        serverInfo[name]?.close()
     }
 }
