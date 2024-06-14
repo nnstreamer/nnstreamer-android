@@ -37,10 +37,12 @@ class MainActivity : ComponentActivity() {
     inner class ModelViewHolder(itemView: View) :
         RecyclerView.ViewHolder(itemView) {
         fun bind(info: ModelInfo) {
+            val name = itemView.findViewById<TextView>(R.id.name)
             val start = itemView.findViewById<Button>(R.id.start)
             val stop = itemView.findViewById<Button>(R.id.stop)
             val port = itemView.findViewById<TextView>(R.id.port)
 
+            name.text = info.name
             start.setOnClickListener(View.OnClickListener {
                 val serverPort = mService?.startServer(info.name, info.filter)
                 port.text = "Listening on port: " + serverPort.toString();
@@ -120,13 +122,21 @@ class MainActivity : ComponentActivity() {
         // todo: Use database instead of just ArrayList
         val modelList = ArrayList<ModelInfo>()
         val path = getExternalFilesDir(null)!!.absolutePath
-        val mobileNet = File("$path/mobilenet_v1_1.0_224_quant.tflite")
-        val filter = "other/tensor,format=static,dimension=(string)3:224:224:1,type=uint8,framerate=0/1 ! " +
-                "tensor_filter framework=tensorflow-lite model=" + mobileNet.getAbsolutePath() + " ! " +
-                "other/tensor,format=static,dimension=(string)1001:1,type=uint8,framerate=0/1"
 
-        val mobileNetInfo = ModelInfo("MobileNet", filter)
+        val mobileNet = File("$path/mobilenet_v1_1.0_224_quant.tflite")
+        val mobileNetFilter = "other/tensor,format=static,dimension=(string)3:224:224:1,type=uint8,framerate=0/1 ! " +
+                "tensor_filter framework=tensorflow-lite model=" + mobileNet.absolutePath + " ! " +
+                "other/tensor,format=static,dimension=(string)1001:1,type=uint8,framerate=0/1"
+        val mobileNetInfo = ModelInfo("MobileNet", mobileNetFilter)
         modelList.add(mobileNetInfo)
+
+        val yolov8 = File("$path/yolov8s_float32.tflite")
+        val yolov8Filter = "other/tensors,num_tensors=1,format=static,dimensions=3:224:224:1,types=float32,framerate=0/1 ! " +
+                "tensor_filter framework=tensorflow-lite model=" + yolov8.absolutePath + " ! " +
+                "other/tensors,num_tensors=1,types=float32,format=static,dimensions=1029:84:1,framerate=0/1"
+
+        val yolov8Info = ModelInfo("Yolov8", yolov8Filter)
+        modelList.add(yolov8Info)
 
         val recyclerView = findViewById<RecyclerView>(R.id.model_list)
         recyclerView.adapter = ModelAdapter(modelList)
