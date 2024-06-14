@@ -22,9 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
-import java.io.OutputStream
 
 // todo: Define DTO with generality and extensibility
 data class ModelInfo(
@@ -78,39 +76,27 @@ class MainActivity : ComponentActivity() {
             mService = null
         }
     }
+
     private fun copyFilesToExternalDir() {
         val am = resources.assets
-        var files: Array<String>? = null
 
-        try {
-            files = am.list("models/")
-        } catch (e: java.lang.Exception) {
-            Log.e(TAG, "#### Failed to get asset file list")
-            e.printStackTrace()
-            return
-        }
-
-        // Copy files into app-specific directory.
-        for (filename in files!!) {
-            try {
-                val inFile = am.open("models/$filename")
-                val outDir = getExternalFilesDir(null)!!.absolutePath
-                val outFile = File(outDir, filename)
-                val out: OutputStream = FileOutputStream(outFile)
-
-                val buffer = ByteArray(1024)
-                var read: Int
-                while ((inFile.read(buffer).also { read = it }) != -1) {
-                    out.write(buffer, 0, read)
+        am.list("models/")?.let { fileArray ->
+            // Copy files into app-specific directory.
+            fileArray.forEach { fileName ->
+                try {
+                    val inFile = am.open("models/$fileName")
+                    inFile.use { stream ->
+                        val outDir = getExternalFilesDir(null).toString()
+                        File(outDir, fileName).outputStream().use {
+                            stream.copyTo(it)
+                        }
+                    }
                 }
-
-                inFile.close()
-                out.flush()
-                out.close()
-            } catch (e: IOException) {
-                Log.e(TAG, "Failed to copy file: $filename")
-                e.printStackTrace()
-                return
+                catch (e: IOException) {
+                    Log.e(TAG, "Failed to copy file: $fileName")
+                    e.printStackTrace()
+                    return
+                }
             }
         }
     }
