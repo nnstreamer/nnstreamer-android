@@ -27,6 +27,12 @@ import java.net.Inet4Address
 import java.net.ServerSocket
 import kotlin.concurrent.thread
 
+// todo: Define DTO with generality and extensibility
+data class ServerInfo(
+    val pipeline: Pipeline,
+    val port: Int,
+    var status: Pipeline.State
+)
 
 class MainService : Service() {
     private inner class MainHandler(looper: Looper) : Handler(looper) {
@@ -73,8 +79,7 @@ class MainService : Service() {
     private lateinit var serviceLooper : Looper
     private lateinit var handlerThread: HandlerThread
     private var initialized = false
-    private var port = -1
-    private var serverInfo = mutableMapOf<String,Pipeline>()
+    private var serverInfoMap = mutableMapOf<String,ServerInfo>()
 
     private fun startForeground() {
         // Get NotificationManager
@@ -145,8 +150,8 @@ class MainService : Service() {
     }
 
     override fun onDestroy() {
-        serverInfo.values.forEach { pipeline ->
-            pipeline.close()
+        serverInfoMap.values.forEach { status ->
+            status.pipeline.close()
         }
         Toast.makeText(this, "The MainService has been gone", Toast.LENGTH_SHORT).show()
     }
@@ -228,22 +233,37 @@ class MainService : Service() {
         return port
     }
 
-    fun startServer(name:String, filter: String): Int {
-        val hostAddress = getIpAddress()
-        if (!isPortAvailable(port)) {
-            port = findPort()
+    fun getPort(name: String): Int {
+        return serverInfoMap[name]?.port ?: -1
+    }
+
+    fun startServer(name:String, filter: String) {
+        if (!serverInfoMap.containsKey(name)) {
+            val hostAddress = getIpAddress()
+            val port = findPort()
+            val desc = "tensor_query_serversrc host=" + hostAddress + " port=" + port.toString() +
+                    " ! " + filter + " ! tensor_query_serversink async=false"
+            val tensorQueryServer = Pipeline(desc, null)
+            serverInfoMap[name] = ServerInfo(tensorQueryServer, port, Pipeline.State.UNKNOWN)
         }
 
-        val desc = "tensor_query_serversrc host=" + hostAddress + " port=" + port.toString() +
-                " ! " + filter + " ! tensor_query_serversink async=false"
-        val tensorQueryServer = Pipeline(desc, null)
-        serverInfo[name] = tensorQueryServer
-        tensorQueryServer.start()
-
-        return port
+        serverInfoMap[name]?.let { modelStatus ->
+            modelStatus.pipeline.start()
+            modelStatus.status = Pipeline.State.PLAYING
+        }
     }
 
     fun stopServer(name:String) {
-        serverInfo[name]?.close()
+        serverInfoMap[name]?.let { modelStatus ->
+            modelStatus.pipeline.stop()
+            modelStatus.status = Pipeline.State.PAUSED
+        }
+    }
+
+    fun closeServer(name:String) {
+        serverInfoMap[name]?.let { modelStatus ->
+            modelStatus.pipeline.close()
+            serverInfoMap.remove(name)
+        }
     }
 }
