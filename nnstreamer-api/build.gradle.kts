@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 import kotlin.io.path.createDirectories
+import kotlin.io.path.isDirectory
 
 plugins {
     id(libs.plugins.androidLibrary.get().pluginId)
@@ -49,6 +50,32 @@ android {
 
                     arguments("TFLITE_ROOT_ANDROID=$tfliteRootPath")
                     arguments("TFLITE_VERSION=$tfliteVersion")
+                }
+
+                if (project.hasProperty("dir.snpe")) {
+                    val snpeDir = properties["dir.snpe"].toString()
+
+                    snpeDir.also { dir ->
+                        val rootPath = externalDirPath.resolve(dir)
+                        val enableSnpe = rootPath.isDirectory()
+
+                        arguments("ENABLE_SNPE=$enableSnpe")
+                        if (!enableSnpe) {
+                            val msg = "The property, 'dir.snpe', is specified in 'gradle.properties', " +
+                                    "but failed to resolve it to $rootPath. SNPE support will be disabled."
+                            project.logger.lifecycle("WARNING: $msg")
+                            return@also
+                        }
+
+                        arguments("SNPE_DIR=$rootPath")
+                        /**
+                         * lib/aarch64-android is the default lib path for SNPE from v2.11 to v.2.19
+                         * If it exists and is a directory, use it. Otherwise, SNPE_LIB_PATH is set by Android-snpe.mk.
+                         */
+                        if (rootPath.resolve("lib").resolve("aarch64-android").isDirectory()) {
+                            arguments("SNPE_LIB_PATH=$rootPath/lib/aarch64-android")
+                        }
+                    }
                 }
             }
         }
