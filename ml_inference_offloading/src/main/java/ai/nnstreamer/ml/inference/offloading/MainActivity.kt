@@ -40,15 +40,24 @@ class MainActivity : ComponentActivity() {
             val name = itemView.findViewById<TextView>(R.id.name)
             val start = itemView.findViewById<Button>(R.id.start)
             val stop = itemView.findViewById<Button>(R.id.stop)
-            val port = itemView.findViewById<TextView>(R.id.port)
+            val close = itemView.findViewById<Button>(R.id.close)
+            val status = itemView.findViewById<TextView>(R.id.status)
 
             name.text = info.name
             start.setOnClickListener(View.OnClickListener {
-                val serverPort = mService?.startServer(info.name, info.filter)
-                port.text = "Listening on port: " + serverPort.toString();
+                mService?.startServer(info.name, info.filter)
+                mService?.getPort(info.name)?.let { serverPort ->
+                    if (serverPort < 0) status.text = "Failed to start the server"
+                    else status.text = "Listening on port: " + serverPort.toString();
+                }
             })
             stop.setOnClickListener(View.OnClickListener {
                 mService?.stopServer(info.name)
+                status.text = resources.getString(R.string.server_paused)
+            })
+            close.setOnClickListener(View.OnClickListener {
+                mService?.closeServer(info.name)
+                status.text = resources.getString(R.string.server_unknown)
             })
         }
     }
