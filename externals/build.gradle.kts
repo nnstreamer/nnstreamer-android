@@ -197,6 +197,7 @@ tasks {
         }
 
         dependsOn("clean")
+        mustRunAfter(":nnstreamer-api:cleanAll")
     }
 }
 
