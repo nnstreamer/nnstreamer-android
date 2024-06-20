@@ -59,7 +59,21 @@ tasks {
     val downloadables = mutableListOf<Downloadable>()
 
     // GStreamer Android Universal
-    val gstVersion = libs.versions.gstreamer.get()
+    val gstVersion = try {
+        libs.versions.gstreamer.get()
+    } catch(e: IllegalStateException) {
+        error("Failed to resolve the variable that defines the required GStreamer version.")
+    }
+
+    when {
+        !project.hasProperty("dir.gstAndroid") -> {
+            error("Could not find the project property, 'dir.gstAndroid'.")
+        }
+        project.properties["dir.gstAndroid"].toString().isBlank() -> {
+            error("The project property, 'dir.gstAndroid', is set to an invalid value.")
+        }
+    }
+
     val gstDownloadable =
         Downloadable(
             "gstreamer-1.0-android-universal-$gstVersion.tar",
@@ -72,8 +86,23 @@ tasks {
     downloadables.add(gstDownloadable)
 
     // TensorFlow Lite
+    /**
+     * TODO: Using the alias in the version catalog makes a build-time dependency on libs.versions.something.
+     *       For the optional features, it is better to define a property and use the value from the property.
+     */
     val tfliteVersion = libs.versions.tensorflowLite.get()
-    val enabledTFLite = project.hasProperty("dir.tfliteAndroid")
+    val enabledTFLite = when {
+        !project.hasProperty("dir.tfliteAndroid") -> {
+            false
+        }
+        project.properties["dir.tfliteAndroid"].toString().isBlank() -> {
+            false
+        }
+        else -> {
+            true
+        }
+    }
+
     val tfliteDownloadable =
         Downloadable(
             "tensorflow-lite-$tfliteVersion.tar",
@@ -146,7 +175,12 @@ tasks {
     register("copyFromTar") {
         doLast {
             for (downloadble in downloadables) {
-                val (tarFileName, targetDir, _) = downloadble
+                val (tarFileName, targetDir, _, isEnabled) = downloadble
+
+                if (!isEnabled) {
+                    continue
+                }
+
                 val tarPath = downloadablePath.resolve(tarFileName)
                 val tree = tarTree(tarPath)
                 var intoPath = projectDir.toPath().resolve(targetDir)
