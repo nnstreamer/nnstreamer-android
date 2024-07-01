@@ -1,5 +1,7 @@
 package ai.nnstreamer.ml.inference.offloading
 
+import ai.nnstreamer.ml.inference.offloading.data.ServiceContainer
+import ai.nnstreamer.ml.inference.offloading.data.ServiceDataContainer
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -78,6 +80,7 @@ class MainService : Service() {
     private lateinit var serviceHandler : MainHandler
     private lateinit var serviceLooper : Looper
     private lateinit var handlerThread: HandlerThread
+    private lateinit var container: ServiceContainer
     private var initialized = false
     private var serverInfoMap = mutableMapOf<String,ServerInfo>()
 
@@ -126,9 +129,11 @@ class MainService : Service() {
         handlerThread = HandlerThread("ServiceStartArguments", Process.THREAD_PRIORITY_BACKGROUND).apply {
             start()
         }
+        this.applicationContext
 
         serviceLooper = handlerThread.looper
         serviceHandler = MainHandler(serviceLooper)
+        container = ServiceDataContainer(this.applicationContext)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
