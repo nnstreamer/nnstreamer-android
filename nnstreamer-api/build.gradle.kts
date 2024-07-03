@@ -43,13 +43,28 @@ android {
                 )
                 targets("nnstreamer-native")
 
+                // TODO: Remove code redundancies in enabling features
                 if (project.hasProperty("dir.tfliteAndroid")) {
                     val tfliteDir = properties["dir.tfliteAndroid"].toString()
-                    val tfliteRootPath = externalDirPath.resolve(tfliteDir)
-                    val tfliteVersion = libs.versions.tensorflowLite.get()
 
-                    arguments("TFLITE_ROOT_ANDROID=$tfliteRootPath")
-                    arguments("TFLITE_VERSION=$tfliteVersion")
+                    tfliteDir.also { dir ->
+                        val rootPath = externalDirPath.resolve(dir)
+                        val tfliteVersion = libs.versions.tensorflowLite.get()
+                        val enableTflite = rootPath.isDirectory()
+
+                        /**
+                         * TODO: The app has a dependency on TFLite.
+                         */
+                        arguments("ENABLE_TF_LITE=$enableTflite")
+                        if (!enableTflite) {
+                            val msg = "The property, 'dir.tfliteAndroid', is specified in 'gradle.properties', " +
+                                    "but failed to resolve it to $rootPath. TFLite support will be disabled."
+                            project.logger.lifecycle("WARNING: $msg")
+                            return@also
+                        }
+                        arguments("TFLITE_ROOT_ANDROID=$rootPath")
+                        arguments("TFLITE_VERSION=$tfliteVersion")
+                    }
                 }
 
                 if (project.hasProperty("dir.snpe")) {
