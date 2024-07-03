@@ -62,7 +62,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    inner class ModelAdapter(private val modelInfos: ArrayList<ModelInfo>) : RecyclerView.Adapter<ModelViewHolder>() {
+    inner class ModelAdapter(private val modelInfos: ArrayList<ModelInfo>) :
+        RecyclerView.Adapter<ModelViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ModelViewHolder {
             val inflater = LayoutInflater.from(parent.context)
             val view = inflater.inflate(R.layout.models, parent, false)
@@ -102,8 +103,7 @@ class MainActivity : ComponentActivity() {
                             stream.copyTo(it)
                         }
                     }
-                }
-                catch (e: IOException) {
+                } catch (e: IOException) {
                     Log.e(TAG, "Failed to copy file: $fileName")
                     e.printStackTrace()
                     return
@@ -133,28 +133,30 @@ class MainActivity : ComponentActivity() {
         val path = getExternalFilesDir(null)!!.absolutePath
 
         val mobileNet = File("$path/mobilenet_v1_1.0_224_quant.tflite")
-        val mobileNetFilter = "other/tensor,format=static,dimension=(string)3:224:224:1,type=uint8,framerate=0/1 ! " +
-                "tensor_filter framework=tensorflow-lite model=" + mobileNet.absolutePath + " ! " +
-                "other/tensor,format=static,dimension=(string)1001:1,type=uint8,framerate=0/1"
+        val mobileNetFilter =
+            "other/tensor,format=static,dimension=(string)3:224:224:1,type=uint8,framerate=0/1 ! " +
+                    "tensor_filter framework=tensorflow-lite model=" + mobileNet.absolutePath + " ! " +
+                    "other/tensor,format=static,dimension=(string)1001:1,type=uint8,framerate=0/1"
         val mobileNetInfo = ModelInfo("MobileNet", mobileNetFilter)
         modelList.add(mobileNetInfo)
 
         val yolov8 = File("$path/yolov8s_float32.tflite")
-        val yolov8Filter = "other/tensors,num_tensors=1,format=static,dimensions=3:224:224:1,types=float32,framerate=0/1 ! " +
-                "tensor_filter framework=tensorflow-lite model=" + yolov8.absolutePath + " ! " +
-                "other/tensors,num_tensors=1,types=float32,format=static,dimensions=1029:84:1,framerate=0/1"
+        val yolov8Filter =
+            "other/tensors,num_tensors=1,format=static,dimensions=3:224:224:1,types=float32,framerate=0/1 ! " +
+                    "tensor_filter framework=tensorflow-lite model=" + yolov8.absolutePath + " ! " +
+                    "other/tensors,num_tensors=1,types=float32,format=static,dimensions=1029:84:1,framerate=0/1"
 
         val yolov8Info = ModelInfo("Yolov8", yolov8Filter)
         modelList.add(yolov8Info)
 
         val recyclerView = findViewById<RecyclerView>(R.id.model_list)
         recyclerView.adapter = ModelAdapter(modelList)
-        recyclerView.layoutManager = LinearLayoutManager(this, )
+        recyclerView.layoutManager = LinearLayoutManager(this)
     }
 
     override fun onStart() {
         super.onStart()
-        Intent(this, MainService::class.java).also { intent->
+        Intent(this, MainService::class.java).also { intent ->
             bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
     }
