@@ -75,11 +75,11 @@ class MainService : Service() {
                 || Build.PRODUCT == "sdk_gphone64_arm64"
                 || Build.FINGERPRINT == "robolectric"
                 || Build.MANUFACTURER.contains("Geny")
-    private lateinit var serviceHandler : MainHandler
-    private lateinit var serviceLooper : Looper
+    private lateinit var serviceHandler: MainHandler
+    private lateinit var serviceLooper: Looper
     private lateinit var handlerThread: HandlerThread
     private var initialized = false
-    private var serverInfoMap = mutableMapOf<String,ServerInfo>()
+    private var serverInfoMap = mutableMapOf<String, ServerInfo>()
 
     private fun startForeground() {
         // Get NotificationManager
@@ -90,11 +90,12 @@ class MainService : Service() {
         val chId = "mainService_ch0"
         val chName = "ch0"
         val chImportance = NotificationManager.IMPORTANCE_HIGH
-        val notificationChannel : NotificationChannel = NotificationChannel(chId, chName, chImportance).apply {
-            val chDesc = "This is a notification channel to run this service in the foreground."
+        val notificationChannel: NotificationChannel =
+            NotificationChannel(chId, chName, chImportance).apply {
+                val chDesc = "This is a notification channel to run this service in the foreground."
 
-            description = chDesc
-        }
+                description = chDesc
+            }
 
         // Create the notification channel declared above
         notificationManager.createNotificationChannel(notificationChannel)
@@ -107,14 +108,22 @@ class MainService : Service() {
 
 
         // Check the FOREGROUND_SERVICE_SPECIAL_USE permission
-        val spUsePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE_SPECIAL_USE)
+        val spUsePermission = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.FOREGROUND_SERVICE_SPECIAL_USE
+        )
         if (spUsePermission == PackageManager.PERMISSION_DENIED) {
             stopSelf()
             return
         }
 
-        ServiceCompat.startForeground(this, 100, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-   }
+        ServiceCompat.startForeground(
+            this,
+            100,
+            notification,
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+        )
+    }
 
     override fun onCreate() {
         initNNStreamer()
@@ -123,9 +132,11 @@ class MainService : Service() {
             stopSelf()
         }
 
-        handlerThread = HandlerThread("ServiceStartArguments", Process.THREAD_PRIORITY_BACKGROUND).apply {
-            start()
-        }
+        handlerThread =
+            HandlerThread("ServiceStartArguments", Process.THREAD_PRIORITY_BACKGROUND).apply {
+                start()
+            }
+        this.applicationContext
 
         serviceLooper = handlerThread.looper
         serviceHandler = MainHandler(serviceLooper)
@@ -195,7 +206,8 @@ class MainService : Service() {
 
     // TODO: Add an ApplicationContext Parameter
     private fun getIpAddress(): String {
-        val connectivityManager = App.context().getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val connectivityManager =
+            App.context().getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = connectivityManager.activeNetwork
         var inetAddress = if (isRunningOnEmulator) "10.0.2.2" else "localhost"
         val linkProperties = connectivityManager.getLinkProperties(network) ?: return inetAddress
@@ -207,7 +219,7 @@ class MainService : Service() {
                 address !is Inet4Address -> continue
                 address.isLoopbackAddress -> continue
                 else -> {
-                    inetAddress = address.hostAddress?:continue
+                    inetAddress = address.hostAddress ?: continue
 
                     break
                 }
@@ -237,7 +249,7 @@ class MainService : Service() {
         return serverInfoMap[name]?.port ?: -1
     }
 
-    fun startServer(name:String, filter: String) {
+    fun startServer(name: String, filter: String) {
         if (!serverInfoMap.containsKey(name)) {
             val hostAddress = getIpAddress()
             val port = findPort()
@@ -253,14 +265,14 @@ class MainService : Service() {
         }
     }
 
-    fun stopServer(name:String) {
+    fun stopServer(name: String) {
         serverInfoMap[name]?.let { modelStatus ->
             modelStatus.pipeline.stop()
             modelStatus.status = Pipeline.State.PAUSED
         }
     }
 
-    fun closeServer(name:String) {
+    fun closeServer(name: String) {
         serverInfoMap[name]?.let { modelStatus ->
             modelStatus.pipeline.close()
             serverInfoMap.remove(name)
