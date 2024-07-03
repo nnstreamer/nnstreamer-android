@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.io.File
-import java.io.IOException
 
 // todo: Define DTO with generality and extensibility
 data class ModelInfo(
@@ -89,29 +87,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun copyFilesToExternalDir() {
-        val am = resources.assets
-
-        am.list("models/")?.let { fileArray ->
-            // Copy files into app-specific directory.
-            fileArray.forEach { fileName ->
-                try {
-                    val inFile = am.open("models/$fileName")
-                    inFile.use { stream ->
-                        val outDir = getExternalFilesDir(null).toString()
-                        File(outDir, fileName).outputStream().use {
-                            stream.copyTo(it)
-                        }
-                    }
-                } catch (e: IOException) {
-                    Log.e(TAG, "Failed to copy file: $fileName")
-                    e.printStackTrace()
-                    return
-                }
-            }
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -124,31 +99,40 @@ class MainActivity : ComponentActivity() {
             }
         }
         setContentView(R.layout.activity_main)
-
-        copyFilesToExternalDir()
         startForegroundService(Intent(this, MainService::class.java))
 
         // todo: Use database instead of just ArrayList
         val modelList = ArrayList<ModelInfo>()
-        val path = getExternalFilesDir(null)!!.absolutePath
+        val privateExternalRoot = getExternalFilesDir(null)
+        val privateExternalModels = privateExternalRoot?.resolve("models")
 
-        val mobileNet = File("$path/mobilenet_v1_1.0_224_quant.tflite")
-        val mobileNetFilter =
-            "other/tensors,num_tensors=1,format=static,dimensions=(string)3:224:224:1,types=uint8,framerate=0/1 ! " +
-                    "tensor_filter framework=tensorflow-lite model=" + mobileNet.absolutePath + " ! " +
-                    "other/tensors,num_tensors=1,format=static,dimensions=(string)1001:1,types=uint8,framerate=0/1"
-        val mobileNetInfo = ModelInfo("MobileNet", mobileNetFilter)
-        modelList.add(mobileNetInfo)
+        if (privateExternalModels?.isDirectory == true) {
+            privateExternalModels.list()?.onEach {
+                when (it.toString()) {
+                    // todo: Changes below are temporarily
+                    "mobilenet_v1_1.0_224_quant.tflite" -> {
+                        val mobileNet =
+                            File("$privateExternalModels/$it")
+                        val mobileNetFilter =
+                            "other/tensor,format=static,dimension=(string)3:224:224:1,type=uint8,framerate=0/1 ! " +
+                                    "tensor_filter framework=tensorflow-lite model=" + mobileNet.absolutePath + " ! " +
+                                    "other/tensor,format=static,dimension=(string)1001:1,type=uint8,framerate=0/1"
+                        val mobileNetInfo = ModelInfo("MobileNet", mobileNetFilter)
+                        modelList.add(mobileNetInfo)
+                    }
 
-        val yolov8 = File("$path/yolov8s_float32.tflite")
-        val yolov8Filter =
-            "other/tensors,num_tensors=1,format=static,dimensions=3:224:224:1,types=float32,framerate=0/1 ! " +
-                    "tensor_filter framework=tensorflow-lite model=" + yolov8.absolutePath + " ! " +
-                    "other/tensors,num_tensors=1,types=float32,format=static,dimensions=1029:84:1,framerate=0/1"
-
-        val yolov8Info = ModelInfo("Yolov8", yolov8Filter)
-        modelList.add(yolov8Info)
-
+                    "yolov8s_float32.tflite" -> {
+                        val yolov8 = File("$privateExternalModels/$it")
+                        val yolov8Filter =
+                            "other/tensors,num_tensors=1,format=static,dimensions=3:224:224:1,types=float32,framerate=0/1 ! " +
+                                    "tensor_filter framework=tensorflow-lite model=" + yolov8.absolutePath + " ! " +
+                                    "other/tensors,num_tensors=1,types=float32,format=static,dimensions=1029:84:1,framerate=0/1"
+                        val yolov8Info = ModelInfo("Yolov8", yolov8Filter)
+                        modelList.add(yolov8Info)
+                    }
+                }
+            }
+        }
         val recyclerView = findViewById<RecyclerView>(R.id.model_list)
         recyclerView.adapter = ModelAdapter(modelList)
         recyclerView.layoutManager = LinearLayoutManager(this)
