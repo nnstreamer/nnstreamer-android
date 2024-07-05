@@ -134,9 +134,9 @@ class MainActivity : ComponentActivity() {
 
         val mobileNet = File("$path/mobilenet_v1_1.0_224_quant.tflite")
         val mobileNetFilter =
-            "other/tensor,format=static,dimension=(string)3:224:224:1,type=uint8,framerate=0/1 ! " +
+            "other/tensors,num_tensors=1,format=static,dimensions=(string)3:224:224:1,types=uint8,framerate=0/1 ! " +
                     "tensor_filter framework=tensorflow-lite model=" + mobileNet.absolutePath + " ! " +
-                    "other/tensor,format=static,dimension=(string)1001:1,type=uint8,framerate=0/1"
+                    "other/tensors,num_tensors=1,format=static,dimensions=(string)1001:1,types=uint8,framerate=0/1"
         val mobileNetInfo = ModelInfo("MobileNet", mobileNetFilter)
         modelList.add(mobileNetInfo)
 
