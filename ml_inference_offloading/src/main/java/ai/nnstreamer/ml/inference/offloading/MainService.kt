@@ -6,10 +6,13 @@ import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
+import android.net.nsd.NsdManager
+import android.net.nsd.NsdServiceInfo
 import android.os.Binder
 import android.os.Build
 import android.os.Handler
@@ -83,6 +86,7 @@ class MainService : Service() {
     private lateinit var container: ServiceContainer
     private var initialized = false
     private var serverInfoMap = mutableMapOf<String, ServerInfo>()
+    private lateinit var nsdManager: NsdManager
 
     private fun startForeground() {
         // Get NotificationManager
@@ -119,6 +123,8 @@ class MainService : Service() {
             stopSelf()
             return
         }
+
+        nsdManager = (getSystemService(Context.NSD_SERVICE) as NsdManager)
 
         ServiceCompat.startForeground(
             this,
@@ -261,6 +267,34 @@ class MainService : Service() {
                     " ! " + filter + " ! tensor_query_serversink async=false"
             val tensorQueryServer = Pipeline(desc, null)
             serverInfoMap[name] = ServerInfo(tensorQueryServer, port, Pipeline.State.UNKNOWN)
+
+            val serviceInfo = NsdServiceInfo().apply {
+                serviceName = name
+                serviceType = "_nsd_offloading._tcp"
+                setPort(port)
+            }
+
+            val registrationListener = object : NsdManager.RegistrationListener {
+                override fun onServiceRegistered(NsdServiceInfo: NsdServiceInfo) {
+                    Log.i(TAG, "on service registered " + NsdServiceInfo.serviceName)
+                }
+
+                override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+                    Log.e(TAG, "registration failed")
+                }
+
+                override fun onServiceUnregistered(arg0: NsdServiceInfo) {
+                    Log.i(TAG, "on service unregistered ")
+                }
+
+                override fun onUnregistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+                    Log.e(TAG, "unregistration failed")
+                }
+            }
+
+            nsdManager.apply {
+                registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener)
+            }
         }
 
         serverInfoMap[name]?.let { modelStatus ->
