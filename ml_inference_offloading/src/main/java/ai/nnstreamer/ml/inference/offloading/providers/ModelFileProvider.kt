@@ -37,14 +37,12 @@ class ModelFileProvider : FileProvider(R.xml.file_paths) {
             throw IOException("Failed to access $externalDir for the security reason (details: $msg)")
         }
 
-
-        resAssets.list(path)?.run {
-            filterNotNull().onEach { file ->
-                val os = FileOutputStream(externalDir.resolve(file))
-
-                resAssets.open("$path/$file").use { stream ->
-                    stream.copyTo(os)
-                }
+        resAssets.list(path)?.filterNotNull()?.takeWhile {
+            // Copy the bundled asset files if they do not exist in the private external storage
+            !externalDir.resolve(it).exists()
+        }?.onEach { name ->
+            resAssets.open("$path/$name").use { stream ->
+                stream.copyTo(FileOutputStream(externalDir.resolve(name)))
             }
         }
     }
