@@ -2,11 +2,22 @@ package ai.nnstreamer.ml.inference.offloading.providers
 
 import ai.nnstreamer.ml.inference.offloading.R
 import android.content.Context
+import android.util.Log
 import androidx.core.content.FileProvider
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.io.FileOutputStream
 import java.io.IOException
 
+
 class ModelFileProvider : FileProvider(R.xml.file_paths) {
+    private val logTag = "FileProvider"
+
+    private lateinit var copyAssetsToExternalJob: Job
+
     companion object {
         val assetPaths = listOf("models")
     }
@@ -38,16 +49,33 @@ class ModelFileProvider : FileProvider(R.xml.file_paths) {
         }
     }
 
+
     @Override
     override fun onCreate(): Boolean {
-        context?.run {
-            assetPaths.onEach { path ->
-                try {
-                    copyAssetsToExternal(this, path)
-                } catch (e: Exception) {
-                    throw RuntimeException("Failed to preload $path in the APK's assets directory")
+        val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
+            Log.e(logTag, "CoroutineExceptionHandler got $exception")
+        }
+
+        copyAssetsToExternalJob =
+            CoroutineScope(Dispatchers.IO).launch(coroutineExceptionHandler) {
+                context?.run {
+                    assetPaths.onEach { path ->
+                        try {
+                            copyAssetsToExternal(this, path)
+                        } catch (e: Exception) {
+                            Log.e(logTag, e.toString())
+                            throw RuntimeException("Failed to preload $path in the APK's assets directory")
+                        }
+                    }
                 }
             }
+
+        copyAssetsToExternalJob.invokeOnCompletion { throwable: Throwable? ->
+            val msgPrefix = "copyAssetsToExternalJob has been"
+
+            throwable?.run {
+                Log.e(logTag, "$msgPrefix canceled.")
+            } ?: Log.i(logTag, "$msgPrefix completed.")
         }
 
         return super.onCreate()
