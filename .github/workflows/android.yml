@@ -16,6 +16,7 @@ jobs:
     - name: Free unused disk space
       shell: bash
       run: |
+        sudo apt-get update --fix-missing
         sudo apt-get remove -y '^dotnet-.*'
         sudo apt-get remove -y '^llvm-.*'
         sudo apt-get remove -y '^mysql-server-core-.*'
@@ -33,6 +34,7 @@ jobs:
         sudo rm -rf /usr/local/share/chromium
         sudo rm -rf /usr/local/lib/node_modules
         sudo rm -rf /var/lib/docker
+        sudo rm -rf /var/lib/apt/lists
     - uses: nttld/setup-ndk@v1
       id: setup-ndk
       with:
