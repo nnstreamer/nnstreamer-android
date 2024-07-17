@@ -2,7 +2,7 @@ package ai.nnstreamer.ml.inference.offloading.providers
 
 import ai.nnstreamer.ml.inference.offloading.App
 import ai.nnstreamer.ml.inference.offloading.R
-import ai.nnstreamer.ml.inference.offloading.data.OfflineModelsRepository
+import ai.nnstreamer.ml.inference.offloading.data.ModelRepositoryImpl
 import android.content.Context
 import android.util.Log
 import androidx.core.content.FileProvider
@@ -20,7 +20,7 @@ class ModelFileProvider : FileProvider(R.xml.file_paths) {
     private val logTag = "FileProvider"
 
     @Inject
-    lateinit var modelsRepository: OfflineModelsRepository
+    lateinit var modelsRepository: ModelRepositoryImpl
 
     private lateinit var copyAssetsToExternalJob: Job
 

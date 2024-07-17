@@ -6,8 +6,8 @@ import javax.inject.Singleton
 
 
 @Singleton
-class OfflineModelsRepository @Inject constructor(private val modelDao: ModelDao) :
-    ModelsRepository {
+class ModelRepositoryImpl @Inject constructor(private val modelDao: ModelDao) :
+    ModelRepository {
     override fun getAllModelsStream(): Flow<List<Model>> = modelDao.getAllModels()
     override fun getModelStream(uid: Int): Flow<Model?> = modelDao.getModel(uid)
     override suspend fun insertModel(model: Model) = modelDao.insert(model)
