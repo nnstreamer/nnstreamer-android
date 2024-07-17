@@ -1,6 +1,6 @@
 package ai.nnstreamer.ml.inference.offloading
 
-import ai.nnstreamer.ml.inference.offloading.data.OfflineModelsRepository
+import ai.nnstreamer.ml.inference.offloading.data.ModelRepositoryImpl
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -85,7 +85,7 @@ class MainService : Service() {
     private lateinit var handlerThread: HandlerThread
 
     @Inject
-    lateinit var modelsRepository: OfflineModelsRepository
+    lateinit var modelsRepository: ModelRepositoryImpl
 
     private var initialized = false
     private var serverInfoMap = mutableMapOf<String, ServerInfo>()
