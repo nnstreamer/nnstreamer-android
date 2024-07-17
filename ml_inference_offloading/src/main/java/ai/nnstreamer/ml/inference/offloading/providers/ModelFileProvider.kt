@@ -1,6 +1,8 @@
 package ai.nnstreamer.ml.inference.offloading.providers
 
+import ai.nnstreamer.ml.inference.offloading.App
 import ai.nnstreamer.ml.inference.offloading.R
+import ai.nnstreamer.ml.inference.offloading.data.OfflineModelsRepository
 import android.content.Context
 import android.util.Log
 import androidx.core.content.FileProvider
@@ -11,10 +13,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.FileOutputStream
 import java.io.IOException
+import javax.inject.Inject
 
 
 class ModelFileProvider : FileProvider(R.xml.file_paths) {
     private val logTag = "FileProvider"
+
+    @Inject
+    lateinit var modelsRepository: OfflineModelsRepository
 
     private lateinit var copyAssetsToExternalJob: Job
 
@@ -50,6 +56,9 @@ class ModelFileProvider : FileProvider(R.xml.file_paths) {
 
     @Override
     override fun onCreate(): Boolean {
+        // Dependency Injection to AppComponent
+        App.instance.appComponent.inject(this)
+
         val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
             Log.e(logTag, "CoroutineExceptionHandler got $exception")
         }

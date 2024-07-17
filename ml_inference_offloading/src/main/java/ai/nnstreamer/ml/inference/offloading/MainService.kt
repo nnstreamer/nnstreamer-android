@@ -1,7 +1,6 @@
 package ai.nnstreamer.ml.inference.offloading
 
-import ai.nnstreamer.ml.inference.offloading.data.ServiceContainer
-import ai.nnstreamer.ml.inference.offloading.data.ServiceDataContainer
+import ai.nnstreamer.ml.inference.offloading.data.OfflineModelsRepository
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -30,6 +29,7 @@ import org.nnsuite.nnstreamer.NNStreamer
 import org.nnsuite.nnstreamer.Pipeline
 import java.net.Inet4Address
 import java.net.ServerSocket
+import javax.inject.Inject
 import kotlin.concurrent.thread
 
 // todo: Define DTO with generality and extensibility
@@ -83,10 +83,14 @@ class MainService : Service() {
     private lateinit var serviceHandler: MainHandler
     private lateinit var serviceLooper: Looper
     private lateinit var handlerThread: HandlerThread
-    private lateinit var container: ServiceContainer
+
+    @Inject
+    lateinit var modelsRepository: OfflineModelsRepository
+
     private var initialized = false
     private var serverInfoMap = mutableMapOf<String, ServerInfo>()
     private lateinit var nsdManager: NsdManager
+
 
     private fun startForeground() {
         // Get NotificationManager
@@ -135,6 +139,9 @@ class MainService : Service() {
     }
 
     override fun onCreate() {
+        // Dependency Injection to AppComponent
+        App.instance.appComponent.inject(this)
+
         initNNStreamer()
         if (!this.initialized) {
             Log.e(TAG, "Failed to initialize nnstreamer")
@@ -149,7 +156,6 @@ class MainService : Service() {
 
         serviceLooper = handlerThread.looper
         serviceHandler = MainHandler(serviceLooper)
-        container = ServiceDataContainer(this.applicationContext)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

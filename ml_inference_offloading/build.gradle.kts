@@ -73,6 +73,10 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 
+    // Dagger
+    implementation(libs.dagger)
+    ksp(libs.dagger.compiler)
+
     // Debug
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)

@@ -88,6 +88,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Dependency Injection
+        (application as App).appComponent.inject(this)
         super.onCreate(savedInstanceState)
         setContent {
             NnstreamerandroidTheme {
