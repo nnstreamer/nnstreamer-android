@@ -22,4 +22,8 @@ class DatabaseModule {
     @Provides
     @Singleton
     fun providePipelineConfigDAO(database: AppDatabase) = database.pipelineConfigDao()
+
+    @Provides
+    @Singleton
+    fun providePipelineDAO(database: AppDatabase) = database.pipelineDao()
 }

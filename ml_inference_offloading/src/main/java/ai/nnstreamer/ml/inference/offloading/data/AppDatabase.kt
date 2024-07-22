@@ -5,10 +5,11 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Model::class, PipelineConfig::class], version = 1, exportSchema = false)
+@Database(entities = [Model::class, Pipeline::class, PipelineConfig::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun modelDao(): ModelDao
     abstract fun pipelineConfigDao(): PipelineConfigDao
+    abstract fun pipelineDao(): PipelineDao
 
     companion object {
         @Volatile
