@@ -1,6 +1,7 @@
 package ai.nnstreamer.ml.inference.offloading
 
 import ai.nnstreamer.ml.inference.offloading.data.ModelRepositoryImpl
+import ai.nnstreamer.ml.inference.offloading.network.NsdRegistrationListener
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -279,24 +280,7 @@ class MainService : Service() {
                 serviceType = "_nsd_offloading._tcp"
                 setPort(port)
             }
-
-            val registrationListener = object : NsdManager.RegistrationListener {
-                override fun onServiceRegistered(NsdServiceInfo: NsdServiceInfo) {
-                    Log.i(TAG, "on service registered " + NsdServiceInfo.serviceName)
-                }
-
-                override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-                    Log.e(TAG, "registration failed")
-                }
-
-                override fun onServiceUnregistered(arg0: NsdServiceInfo) {
-                    Log.i(TAG, "on service unregistered ")
-                }
-
-                override fun onUnregistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-                    Log.e(TAG, "unregistration failed")
-                }
-            }
+            val registrationListener = NsdRegistrationListener()
 
             nsdManager.apply {
                 registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener)
