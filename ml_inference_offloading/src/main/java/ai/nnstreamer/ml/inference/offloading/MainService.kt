@@ -1,6 +1,9 @@
 package ai.nnstreamer.ml.inference.offloading
 
+import ai.nnstreamer.ml.inference.offloading.data.Model
 import ai.nnstreamer.ml.inference.offloading.data.ModelRepositoryImpl
+import ai.nnstreamer.ml.inference.offloading.data.OffloadingService
+import ai.nnstreamer.ml.inference.offloading.data.OffloadingServiceRepositoryImpl
 import ai.nnstreamer.ml.inference.offloading.network.NsdRegistrationListener
 import android.Manifest
 import android.app.NotificationChannel
@@ -12,6 +15,7 @@ import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
+import android.net.nsd.NsdManager.RegistrationListener
 import android.net.nsd.NsdServiceInfo
 import android.os.Binder
 import android.os.Build
@@ -26,6 +30,9 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.nnsuite.nnstreamer.NNStreamer
 import org.nnsuite.nnstreamer.Pipeline
 import java.net.Inet4Address
@@ -37,7 +44,12 @@ import kotlin.concurrent.thread
 data class ServerInfo(
     val pipeline: Pipeline,
     val port: Int,
-    var status: Pipeline.State
+    var status: Pipeline.State,
+)
+
+data class OffloadingServiceStatus(
+    val pipeline: Pipeline,
+    val registrationListener: RegistrationListener,
 )
 
 class MainService : Service() {
@@ -54,12 +66,64 @@ class MainService : Service() {
         }
     }
 
+    private inner class PipelineCallback(serviceId: Int, modelId: Int, port: Int) :
+        Pipeline.StateChangeCallback {
+        val id = serviceId
+
+        val serviceInfo = NsdServiceInfo().apply {
+            serviceName = modelId.toString()
+            serviceType = "_nsd_offloading._tcp"
+            setPort(port)
+        }
+
+        override fun onStateChanged(state: Pipeline.State?) {
+            Log.i(TAG, "Service " + id.toString() + " change to " + state.toString())
+            serviceMap[id]?.let { service ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    if (state != null) {
+                        offloadingServiceRepositoryImpl.changeStateOffloadingService(
+                            id,
+                            state
+                        )
+                    }
+
+                    when (state) {
+                        Pipeline.State.UNKNOWN -> {}
+                        Pipeline.State.NULL -> {}
+                        Pipeline.State.READY -> {}
+                        Pipeline.State.PAUSED -> {
+                            nsdManager.apply {
+                                unregisterService(service.registrationListener)
+                            }
+                        }
+
+                        Pipeline.State.PLAYING -> {
+                            nsdManager.apply {
+                                registerService(
+                                    serviceInfo,
+                                    NsdManager.PROTOCOL_DNS_SD,
+                                    service.registrationListener
+                                )
+
+                            }
+                        }
+
+                        null -> {
+                            Log.e(TAG, "Pipeline callback state is NULL")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     inner class LocalBinder : Binder() {
         fun getService(): MainService = this@MainService
     }
 
     private val TAG = "MainService"
     private val binder = LocalBinder()
+
     private val isRunningOnEmulator: Boolean
         get() = (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
                 || Build.FINGERPRINT.startsWith("generic")
@@ -88,8 +152,13 @@ class MainService : Service() {
     @Inject
     lateinit var modelsRepository: ModelRepositoryImpl
 
+    @Inject
+    lateinit var offloadingServiceRepositoryImpl: OffloadingServiceRepositoryImpl
+
     private var initialized = false
     private var serverInfoMap = mutableMapOf<String, ServerInfo>()
+    private var serviceMap = mutableMapOf<Int, OffloadingServiceStatus>()
+    private var gServiceId = 1
     private lateinit var nsdManager: NsdManager
 
 
@@ -129,8 +198,6 @@ class MainService : Service() {
             return
         }
 
-        nsdManager = (getSystemService(Context.NSD_SERVICE) as NsdManager)
-
         ServiceCompat.startForeground(
             this,
             100,
@@ -157,6 +224,7 @@ class MainService : Service() {
 
         serviceLooper = handlerThread.looper
         serviceHandler = MainHandler(serviceLooper)
+        nsdManager = (getSystemService(Context.NSD_SERVICE) as NsdManager)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -304,6 +372,79 @@ class MainService : Service() {
         serverInfoMap[name]?.let { modelStatus ->
             modelStatus.pipeline.close()
             serverInfoMap.remove(name)
+        }
+    }
+
+    // TODO: This is a temporary function to create models
+    suspend fun createModels() {
+        val fakeMobileNet = Model(
+            1,
+            "other/tensors,num_tensors=1,format=static,dimensions=(string)3:224:224:1,types=uint8,framerate=0/1 ! " +
+                    "tensor_filter framework=tensorflow-lite model=/storage/emulated/0/Android/data/ai.nnstreamer.ml.inference.offloading/files/models/mobilenet_v1_1.0_224_quant.tflite ! " +
+                    "other/tensors,num_tensors=1,format=static,dimensions=(string)1001:1,types=uint8,framerate=0/1"
+        )
+        modelsRepository.insertModel(fakeMobileNet)
+
+        val fakeYolov8 = Model(
+            2,
+            "other/tensors,num_tensors=1,format=static,dimensions=3:224:224:1,types=float32,framerate=0/1 ! " +
+                    "tensor_filter framework=tensorflow-lite model=/storage/emulated/0/Android/data/ai.nnstreamer.ml.inference.offloading/files/models/yolov8s_float32.tflite ! " +
+                    "other/tensors,num_tensors=1,types=float32,format=static,dimensions=1029:84:1,framerate=0/1"
+        )
+        modelsRepository.insertModel(fakeYolov8)
+    }
+
+    suspend fun loadModels() {
+        val models = modelsRepository.getAllModelsStream()
+        models.collect {
+            val hostAddress = getIpAddress()
+            it.forEach { model ->
+                // TODO: Find a better way to create new uid
+                val serviceId = gServiceId++
+
+                val port = findPort()
+                // TODO: This is a temporary desc and must be updated to use model info correctly
+                val desc =
+                    "tensor_query_serversrc id=" + serviceId.toString() + " host=" + hostAddress + " port=" +
+                            port.toString() + " ! " + model.name + " ! tensor_query_serversink async=false id=" + serviceId.toString()
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    val stateCb = PipelineCallback(serviceId, model.uid, port)
+                    val pipeline = Pipeline(desc, stateCb)
+                    val registrationListener = NsdRegistrationListener()
+
+                    val offloadingServiceStatus = OffloadingServiceStatus(
+                        pipeline,
+                        registrationListener
+                    )
+                    serviceMap[serviceId] = offloadingServiceStatus
+
+                    val offloadingService = OffloadingService(
+                        serviceId,
+                        model.uid,
+                        port,
+                        pipeline.state,
+                        0
+                    )
+                    offloadingServiceRepositoryImpl.insertOffloadingService(offloadingService)
+                }
+            }
+        }
+    }
+
+    fun startService(id: Int) {
+        serviceMap[id]?.pipeline?.start()
+    }
+
+    fun stopService(id: Int) {
+        serviceMap[id]?.pipeline?.stop()
+    }
+
+    fun destroyService(id: Int) {
+        serviceMap[id]?.pipeline?.close()
+        serviceMap.remove(id)
+        CoroutineScope(Dispatchers.IO).launch {
+            offloadingServiceRepositoryImpl.deleteOffloadingService(id)
         }
     }
 }
