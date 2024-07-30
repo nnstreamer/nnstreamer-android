@@ -1,33 +1,45 @@
 package ai.nnstreamer.ml.inference.offloading
 
-import ai.nnstreamer.ml.inference.offloading.providers.ModelFileProvider
-import androidx.recyclerview.widget.RecyclerView
-import org.junit.Assert.assertEquals
+import ai.nnstreamer.ml.inference.offloading.ui.OffloadingServiceUiState
+import ai.nnstreamer.ml.inference.offloading.ui.components.ServiceList
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.Robolectric
+import org.nnsuite.nnstreamer.Pipeline
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class ActivityUnitTest {
+    @get:Rule
+    val composeRule = createComposeRule()
+
     @Test
-    fun testModelListLength() {
-        val testModelFileProvider =
-            Robolectric.buildContentProvider(ModelFileProvider::class.java).create().get()
-        val activity = testModelFileProvider?.let {
-            val activityController =
-                Robolectric.buildActivity(MainActivity::class.java).create()
+    fun testServiceList() {
+        val offloadingServiceUiStateList: List<OffloadingServiceUiState> = listOf(
+            OffloadingServiceUiState(1, Pipeline.State.NULL, 3000)
+        )
 
-            activityController.get()
+        composeRule.setContent {
+            ServiceList(
+                services = offloadingServiceUiStateList,
+                onClickStart = { },
+                onClickStop = { },
+                onClickDestroy = { })
         }
 
-        activity?.run {
-            val recyclerview = this.findViewById<RecyclerView>(R.id.model_list)
-            val numModelsInAssets =
-                this.applicationContext.resources.assets.list("models")?.size ?: -1
-            val numModels = recyclerview.adapter?.itemCount ?: 0
+        // Verify that the UI elements are displayed
+        composeRule.onNodeWithText("Service ID: 1, State: NULL, Port: 3000").assertIsDisplayed()
+        composeRule.onNodeWithText("Start").assertIsDisplayed()
+        composeRule.onNodeWithText("Stop").assertIsDisplayed()
+        composeRule.onNodeWithText("Destroy").assertIsDisplayed()
 
-            assertEquals(numModelsInAssets, numModels)
-        }
+        // Simulate button clicks
+        composeRule.onNodeWithText("Start").performClick()
+        composeRule.onNodeWithText("Stop").performClick()
+        composeRule.onNodeWithText("Destroy").performClick()
     }
 }

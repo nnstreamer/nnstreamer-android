@@ -18,6 +18,7 @@ robolectric = "4.12.2"
 room = "2.6.1"
 tensorflowLite = "2.16.1"
 tukaani-xz-plugin = "1.9"
+uiTestJunit4Android = "1.6.8"
 xyz-simple-git-plugin = "2.0.3"
 
 [libraries]
@@ -45,6 +46,7 @@ androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-ui-test-junit4-android = { group = "androidx.compose.ui", name = "ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
