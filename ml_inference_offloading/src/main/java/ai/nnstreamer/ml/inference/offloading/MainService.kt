@@ -40,13 +40,6 @@ import java.net.ServerSocket
 import javax.inject.Inject
 import kotlin.concurrent.thread
 
-// todo: Define DTO with generality and extensibility
-data class ServerInfo(
-    val pipeline: Pipeline,
-    val port: Int,
-    var status: Pipeline.State,
-)
-
 data class OffloadingServiceStatus(
     val pipeline: Pipeline,
     val registrationListener: RegistrationListener,
@@ -156,7 +149,6 @@ class MainService : Service() {
     lateinit var offloadingServiceRepositoryImpl: OffloadingServiceRepositoryImpl
 
     private var initialized = false
-    private var serverInfoMap = mutableMapOf<String, ServerInfo>()
     private var serviceMap = mutableMapOf<Int, OffloadingServiceStatus>()
     private var gServiceId = 1
     private lateinit var nsdManager: NsdManager
@@ -246,9 +238,6 @@ class MainService : Service() {
     }
 
     override fun onDestroy() {
-        serverInfoMap.values.forEach { status ->
-            status.pipeline.close()
-        }
         Toast.makeText(this, "The MainService has been gone", Toast.LENGTH_SHORT).show()
     }
 
@@ -268,25 +257,6 @@ class MainService : Service() {
                 Log.e(TAG, "Failed to initialize NNStreamer")
             }
         }
-    }
-
-    private fun isPortAvailable(port: Int): Boolean {
-        var result = false
-        if (port < 0) {
-            return result
-        }
-
-        val portChecker = thread() {
-            try {
-                val serverSocket = ServerSocket(port)
-                serverSocket.close()
-                result = true
-            } catch (e: Exception) {
-                Log.e(TAG, e.toString())
-            }
-        }
-        portChecker.join()
-        return result
     }
 
     // TODO: Add an ApplicationContext Parameter
@@ -328,51 +298,6 @@ class MainService : Service() {
         }
         portFinder.join()
         return port
-    }
-
-    fun getPort(name: String): Int {
-        return serverInfoMap[name]?.port ?: -1
-    }
-
-    fun startServer(name: String, filter: String) {
-        if (!serverInfoMap.containsKey(name)) {
-            val hostAddress = getIpAddress()
-            val port = findPort()
-            val desc = "tensor_query_serversrc host=" + hostAddress + " port=" + port.toString() +
-                    " ! " + filter + " ! tensor_query_serversink async=false"
-            val tensorQueryServer = Pipeline(desc, null)
-            serverInfoMap[name] = ServerInfo(tensorQueryServer, port, Pipeline.State.UNKNOWN)
-
-            val serviceInfo = NsdServiceInfo().apply {
-                serviceName = name
-                serviceType = "_nsd_offloading._tcp"
-                setPort(port)
-            }
-            val registrationListener = NsdRegistrationListener()
-
-            nsdManager.apply {
-                registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener)
-            }
-        }
-
-        serverInfoMap[name]?.let { modelStatus ->
-            modelStatus.pipeline.start()
-            modelStatus.status = Pipeline.State.PLAYING
-        }
-    }
-
-    fun stopServer(name: String) {
-        serverInfoMap[name]?.let { modelStatus ->
-            modelStatus.pipeline.stop()
-            modelStatus.status = Pipeline.State.PAUSED
-        }
-    }
-
-    fun closeServer(name: String) {
-        serverInfoMap[name]?.let { modelStatus ->
-            modelStatus.pipeline.close()
-            serverInfoMap.remove(name)
-        }
     }
 
     // TODO: This is a temporary function to create models
