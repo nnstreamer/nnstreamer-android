@@ -1,5 +1,8 @@
 package ai.nnstreamer.ml.inference.offloading
 
+import ai.nnstreamer.ml.inference.offloading.ui.MainViewModel
+import ai.nnstreamer.ml.inference.offloading.ui.components.ButtonList
+import ai.nnstreamer.ml.inference.offloading.ui.components.ServiceList
 import ai.nnstreamer.ml.inference.offloading.ui.theme.NnstreamerandroidTheme
 import android.content.ComponentName
 import android.content.Context
@@ -14,18 +17,24 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.io.File
 
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
 // todo: Define DTO with generality and extensibility
 data class ModelInfo(
     val name: String,
-    val filter: String
+    val filter: String,
 )
 
 class MainActivity : ComponentActivity() {
@@ -76,6 +85,9 @@ class MainActivity : ComponentActivity() {
         override fun getItemCount(): Int = modelInfos.size
     }
 
+    @Inject
+    lateinit var mViewModel: MainViewModel
+
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             val binder = service as MainService.LocalBinder
@@ -99,8 +111,18 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) { }
             }
+            Column {
+                ButtonList(
+                    onCreateModel = { lifecycleScope.launch { mService?.createModels() } },
+                    onLoadModel = { lifecycleScope.launch { mService?.loadModels() } }
+                )
+                ServiceList(
+                    mViewModel.services.collectAsState().value,
+                    onClickStart = { id -> mService?.startService(id) },
+                    onClickStop = { id -> mService?.stopService(id) },
+                    onClickDestroy = { id -> mService?.destroyService(id) })
+            }
         }
-        setContentView(R.layout.activity_main)
         startForegroundService(Intent(this, MainService::class.java))
 
         // todo: Use database instead of just ArrayList
@@ -135,9 +157,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        val recyclerView = findViewById<RecyclerView>(R.id.model_list)
-        recyclerView.adapter = ModelAdapter(modelList)
-        recyclerView.layoutManager = LinearLayoutManager(this)
     }
 
     override fun onStart() {
