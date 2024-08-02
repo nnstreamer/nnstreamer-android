@@ -2,6 +2,7 @@ package ai.nnstreamer.ml.inference.offloading.data
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import org.nnsuite.nnstreamer.Pipeline
 
@@ -13,6 +14,9 @@ import org.nnsuite.nnstreamer.Pipeline
             parentColumns = ["uid"],
             childColumns = ["modelId"]
         ),
+    ],
+    indices = [
+        Index("modelId")
     ]
 )
 data class OffloadingService(
