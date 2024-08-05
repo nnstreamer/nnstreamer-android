@@ -2,10 +2,12 @@
 activityCompose = "1.8.2"
 android-compile-sdk = "34"
 agp = "8.3.1"
+appcompat = "1.7.0"
 commons-compress-lib = "1.26.1"
 composeBom = "2024.04.00"
 coreKtx = "1.12.0"
 dagger = "2.51.1"
+datastore = "1.1.1"
 espressoCore = "3.5.1"
 google-devtools-ksp = "1.9.23-1.0.19"
 gstreamer = "1.24.0"
@@ -29,8 +31,11 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 tukaani-xz = { group = "org.tukaani", name = "xz", version.ref = "tukaani-xz-plugin" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-datastore-core-android = { group = "androidx.datastore", name = "datastore-core-android", version.ref = "datastore" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
