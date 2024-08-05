@@ -238,6 +238,15 @@ class MainService : Service() {
     }
 
     override fun onDestroy() {
+        serviceMap.forEach { service ->
+            val pipeline = service.value.pipeline
+            pipeline.stop()
+            pipeline.close()
+            CoroutineScope(Dispatchers.IO).launch {
+                offloadingServiceRepositoryImpl.deleteOffloadingService(service.key)
+            }
+        }
+        serviceMap.clear()
         Toast.makeText(this, "The MainService has been gone", Toast.LENGTH_SHORT).show()
     }
 
