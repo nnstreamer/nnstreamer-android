@@ -34,6 +34,7 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.nnsuite.nnstreamer.NNStreamer
 import org.nnsuite.nnstreamer.Pipeline
 import java.net.Inet4Address
@@ -154,7 +155,6 @@ class MainService : Service() {
 
     private var initialized = false
     private var serviceMap = mutableMapOf<Int, OffloadingServiceStatus>()
-    private var gServiceId = 1
     private lateinit var nsdManager: NsdManager
 
 
@@ -337,9 +337,9 @@ class MainService : Service() {
         models.collect {
             val hostAddress = getIpAddress()
             it.forEach { model ->
-                // TODO: Find a better way to create new uid
-                val serviceId = gServiceId++
-
+                val serviceId = runBlocking {
+                    preferencesDataStore.getIncrementalCounter()
+                }
                 val port = findPort()
                 // TODO: This is a temporary desc and must be updated to use model info correctly
                 val desc =
