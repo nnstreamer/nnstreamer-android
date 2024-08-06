@@ -4,6 +4,7 @@ import ai.nnstreamer.ml.inference.offloading.data.Model
 import ai.nnstreamer.ml.inference.offloading.data.ModelRepositoryImpl
 import ai.nnstreamer.ml.inference.offloading.data.OffloadingService
 import ai.nnstreamer.ml.inference.offloading.data.OffloadingServiceRepositoryImpl
+import ai.nnstreamer.ml.inference.offloading.data.PreferencesDataStoreImpl
 import ai.nnstreamer.ml.inference.offloading.network.NsdRegistrationListener
 import android.Manifest
 import android.app.NotificationChannel
@@ -147,6 +148,9 @@ class MainService : Service() {
 
     @Inject
     lateinit var offloadingServiceRepositoryImpl: OffloadingServiceRepositoryImpl
+
+    @Inject
+    lateinit var preferencesDataStore: PreferencesDataStoreImpl
 
     private var initialized = false
     private var serviceMap = mutableMapOf<Int, OffloadingServiceStatus>()
