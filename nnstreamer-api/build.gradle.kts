@@ -33,13 +33,14 @@ android {
         externalNativeBuild {
             ndkBuild {
                 abiFilters("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-                arguments("NDK_PROJECT_PATH=./",
-                        "NDK_APPLICATION_MK=$mlApiNNSJniPath/Application.mk",
-                        "GSTREAMER_JAVA_SRC_DIR=src/main/java",
-                        "GSTREAMER_ROOT_ANDROID=$gstRootPath",
-                        "NNSTREAMER_ROOT=$nnsRootPath",
-                        "NNSTREAMER_EDGE_ROOT=$nnsEdgeRootPath",
-                        "ML_API_ROOT=$mlApiRootPath"
+                arguments(
+                    "NDK_PROJECT_PATH=./",
+                    "NDK_APPLICATION_MK=$mlApiNNSJniPath/Application.mk",
+                    "GSTREAMER_JAVA_SRC_DIR=src/main/java",
+                    "GSTREAMER_ROOT_ANDROID=$gstRootPath",
+                    "NNSTREAMER_ROOT=$nnsRootPath",
+                    "NNSTREAMER_EDGE_ROOT=$nnsEdgeRootPath",
+                    "ML_API_ROOT=$mlApiRootPath"
                 )
                 targets("nnstreamer-native")
 
@@ -57,8 +58,9 @@ android {
                          */
                         arguments("ENABLE_TF_LITE=$enableTflite")
                         if (!enableTflite) {
-                            val msg = "The property, 'dir.tfliteAndroid', is specified in 'gradle.properties', " +
-                                    "but failed to resolve it to $rootPath. TFLite support will be disabled."
+                            val msg =
+                                "The property, 'dir.tfliteAndroid', is specified in 'gradle.properties', " +
+                                        "but failed to resolve it to $rootPath. TFLite support will be disabled."
                             project.logger.lifecycle("WARNING: $msg")
                             return@also
                         }
@@ -76,8 +78,9 @@ android {
 
                         arguments("ENABLE_SNPE=$enableSnpe")
                         if (!enableSnpe) {
-                            val msg = "The property, 'dir.snpe', is specified in 'gradle.properties', " +
-                                    "but failed to resolve it to $rootPath. SNPE support will be disabled."
+                            val msg =
+                                "The property, 'dir.snpe', is specified in 'gradle.properties', " +
+                                        "but failed to resolve it to $rootPath. SNPE support will be disabled."
                             project.logger.lifecycle("WARNING: $msg")
                             return@also
                         }
@@ -97,16 +100,19 @@ android {
     }
     buildTypes {
         debug {
-            enableUnitTestCoverage=true
+            enableUnitTestCoverage = true
         }
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     externalNativeBuild {
         ndkBuild {
-            path=file(mlApiNNSJniPath.resolve("Android.mk"))
+            path = file(mlApiNNSJniPath.resolve("Android.mk"))
         }
     }
 
@@ -120,7 +126,8 @@ android {
 
     val genNnsSrc = tasks.register("genNnsSrc", Copy::class) {
         val commonSuffix = "src/main/java/org/nnsuite/nnstreamer"
-        val srcDirPath = externalDirPath.resolve("ml-api/java/android/nnstreamer").resolve(commonSuffix)
+        val srcDirPath =
+            externalDirPath.resolve("ml-api/java/android/nnstreamer").resolve(commonSuffix)
         val outDirPath = project.projectDir.toPath().resolve(commonSuffix).apply {
             createDirectories()
         }
@@ -170,8 +177,10 @@ android {
 
 afterEvaluate {
     listOf("Debug", "Release").forEach { buildType ->
-        val compileJavaWithJavacTask = project.getTasksByName("compile${buildType}JavaWithJavac", false)
-        val externalNativeBuildTask = project.getTasksByName("externalNativeBuild${buildType}", false)
+        val compileJavaWithJavacTask =
+            project.getTasksByName("compile${buildType}JavaWithJavac", false)
+        val externalNativeBuildTask =
+            project.getTasksByName("externalNativeBuild${buildType}", false)
 
         if (compileJavaWithJavacTask.size >= 1 && externalNativeBuildTask.size >= 1) {
             val compileJavaTask = compileJavaWithJavacTask.first()
