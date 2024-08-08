@@ -8,6 +8,7 @@ composeBom = "2024.04.00"
 coreKtx = "1.12.0"
 dagger = "2.51.1"
 datastore = "1.1.1"
+dokka = "1.9.20"
 espressoCore = "3.5.1"
 google-devtools-ksp = "1.9.23-1.0.19"
 gstreamer = "1.24.0"
@@ -27,6 +28,8 @@ xyz-simple-git-plugin = "2.0.3"
 commons-compress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commons-compress-lib" }
 dagger = { module = "com.google.dagger:dagger", version.ref = "dagger" }
 dagger-compiler = { module = "com.google.dagger:dagger-compiler", version.ref = "dagger" }
+dokka-base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "dokka" }
+dokka-core = { module = "org.jetbrains.dokka:dokka-core", version.ref = "dokka" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 tukaani-xz = { group = "org.tukaani", name = "xz", version.ref = "tukaani-xz-plugin" }
@@ -53,9 +56,11 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-ui-test-junit4-android = { group = "androidx.compose.ui", name = "ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
 
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 googleDevtoolsKsp = { id = "com.google.devtools.ksp", version.ref = "google-devtools-ksp" }
+jetbrainsDokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 xyz-simple-git = { id = "xyz.ronella.simple-git", version.ref = "xyz-simple-git-plugin" }
