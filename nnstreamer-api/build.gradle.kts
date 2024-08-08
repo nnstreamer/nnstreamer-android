@@ -5,6 +5,7 @@ import kotlin.io.path.isDirectory
 
 plugins {
     id(libs.plugins.androidLibrary.get().pluginId)
+    id(libs.plugins.jetbrainsDokka.get().pluginId)
 }
 
 android {
@@ -172,6 +173,12 @@ android {
             }
             dependsOn("clean")
         }
+    }
+
+    dependencies {
+        // Dokka
+        implementation(libs.dokka.base)
+        compileOnly(libs.dokka.core)
     }
 }
 

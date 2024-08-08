@@ -2,6 +2,7 @@ plugins {
     id(libs.plugins.androidApplication.get().pluginId)
     id(libs.plugins.googleDevtoolsKsp.get().pluginId)
     id(libs.plugins.jetbrainsKotlinAndroid.get().pluginId)
+    id(libs.plugins.jetbrainsDokka.get().pluginId)
 }
 
 android {
@@ -97,4 +98,8 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.ui.test.junit4)
+
+    // Dokka
+    implementation(libs.dokka.base)
+    compileOnly(libs.dokka.core)
 }
