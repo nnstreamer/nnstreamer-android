@@ -79,6 +79,9 @@ dependencies {
     implementation(libs.androidx.datastore.core.android)
     implementation(libs.androidx.datastore.preferences)
 
+    // For TypeConverters
+    implementation(libs.gson)
+
     // Dagger
     implementation(libs.dagger)
     ksp(libs.dagger.compiler)
