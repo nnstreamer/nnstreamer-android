@@ -11,6 +11,7 @@ datastore = "1.1.1"
 dokka = "1.9.20"
 espressoCore = "3.5.1"
 google-devtools-ksp = "1.9.23-1.0.19"
+gson = "2.11.0"
 gstreamer = "1.24.0"
 junit = "4.13.2"
 junitVersion = "1.1.5"
@@ -30,6 +31,7 @@ dagger = { module = "com.google.dagger:dagger", version.ref = "dagger" }
 dagger-compiler = { module = "com.google.dagger:dagger-compiler", version.ref = "dagger" }
 dokka-base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "dokka" }
 dokka-core = { module = "org.jetbrains.dokka:dokka-core", version.ref = "dokka" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 tukaani-xz = { group = "org.tukaani", name = "xz", version.ref = "tukaani-xz-plugin" }
