@@ -15,7 +15,16 @@ import java.io.FileOutputStream
 import java.io.IOException
 import javax.inject.Inject
 
-
+/**
+ * A FileProvider for the models.
+ *
+ * This component is responsible for preloading the bundled models to the App's private external
+ * storage and generating a URI for the specified model.
+ *
+ * @constructor Creates a ModelFileProvider.
+ * @property modelsRepository The class that implements the repository pattern for the models.
+ * @see ModelRepositoryImpl
+ */
 class ModelFileProvider : FileProvider(R.xml.file_paths) {
     private val logTag = "FileProvider"
 
@@ -28,6 +37,12 @@ class ModelFileProvider : FileProvider(R.xml.file_paths) {
         val assetPaths = listOf("models")
     }
 
+    /**
+     * Copies the assets to the external storage.
+     *
+     * @param ctx The context of the application.
+     * @param path The path to the specified external storage to copy the assets.
+     */
     private fun copyAssetsToExternal(ctx: Context, path: String) {
         val resAssets = ctx.resources.assets
         val externalDir = ctx.getExternalFilesDir(null)?.resolve(path)
@@ -53,7 +68,13 @@ class ModelFileProvider : FileProvider(R.xml.file_paths) {
         }
     }
 
-
+    /**
+     * A lifecycle callback method that overrides [FileProvider.onCreate].
+     *
+     * This callback is invoked when the provider is being created.
+     *
+     * @return True if the provider was successfully created, false otherwise.
+     */
     @Override
     override fun onCreate(): Boolean {
         // Dependency Injection to AppComponent
@@ -87,5 +108,4 @@ class ModelFileProvider : FileProvider(R.xml.file_paths) {
 
         return super.onCreate()
     }
-
 }
