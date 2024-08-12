@@ -6,6 +6,20 @@ import androidx.room.PrimaryKey
 import org.json.JSONObject
 import java.io.File
 
+/**
+ * The entity class for the models table.
+ *
+ * @constructor Creates a Model object.
+ * @property framework The neural network framework supporting this model.
+ * @property models The file names of this model.
+ * @property inputInfo A map that represents the input information of the model.
+ * @property outputInfo A map that represents the output information of the model.
+ * @property optionalInfo A map that extensible information of the model.
+ * @pram uid The unique ID of the model.
+ * @pram name The name that represents this model.
+ * @pram jsonObject The JSON object corresponding to 'single'.
+ * @pram optionalJsonObject The JSON object corresponding to 'information'.
+ */
 @Entity(tableName = "models")
 data class Model(
     @PrimaryKey
@@ -74,7 +88,6 @@ data class Model(
 
         optionalInfo = optionalInformationMap
     }
-
 
     var framework: String = ""
     var models: String = ""
