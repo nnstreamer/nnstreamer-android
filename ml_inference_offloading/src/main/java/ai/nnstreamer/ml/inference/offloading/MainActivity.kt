@@ -55,7 +55,6 @@ class MainActivity : ComponentActivity() {
             }
             Column {
                 ButtonList(
-                    onCreateModel = { lifecycleScope.launch { mService?.createModels() } },
                     onLoadModel = { lifecycleScope.launch { mService?.loadModels() } }
                 )
                 ServiceList(

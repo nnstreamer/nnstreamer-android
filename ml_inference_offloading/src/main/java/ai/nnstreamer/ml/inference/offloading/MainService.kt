@@ -1,6 +1,5 @@
 package ai.nnstreamer.ml.inference.offloading
 
-import ai.nnstreamer.ml.inference.offloading.data.Model
 import ai.nnstreamer.ml.inference.offloading.data.ModelRepositoryImpl
 import ai.nnstreamer.ml.inference.offloading.data.OffloadingService
 import ai.nnstreamer.ml.inference.offloading.data.OffloadingServiceRepositoryImpl
@@ -313,38 +312,37 @@ class MainService : Service() {
         return port
     }
 
-    // TODO: This is a temporary function to create models
-    suspend fun createModels() {
-        val fakeMobileNet = Model(
-            1,
-            "other/tensors,num_tensors=1,format=static,dimensions=(string)3:224:224:1,types=uint8,framerate=0/1 ! " +
-                    "tensor_filter framework=tensorflow-lite model=/storage/emulated/0/Android/data/ai.nnstreamer.ml.inference.offloading/files/models/mobilenet_v1_1.0_224_quant.tflite ! " +
-                    "other/tensors,num_tensors=1,format=static,dimensions=(string)1001:1,types=uint8,framerate=0/1"
-        )
-        modelsRepository.insertModel(fakeMobileNet)
-
-        val fakeYolov8 = Model(
-            2,
-            "other/tensors,num_tensors=1,format=static,dimensions=3:224:224:1,types=float32,framerate=0/1 ! " +
-                    "tensor_filter framework=tensorflow-lite model=/storage/emulated/0/Android/data/ai.nnstreamer.ml.inference.offloading/files/models/yolov8s_float32.tflite ! " +
-                    "other/tensors,num_tensors=1,types=float32,format=static,dimensions=1029:84:1,framerate=0/1"
-        )
-        modelsRepository.insertModel(fakeYolov8)
-    }
-
     suspend fun loadModels() {
+        val hostAddress = getIpAddress()
         val models = modelsRepository.getAllModelsStream()
+
         models.collect {
-            val hostAddress = getIpAddress()
             it.forEach { model ->
                 val serviceId = runBlocking {
                     preferencesDataStore.getIncrementalCounter()
                 }
+                // TODO: The following code for generation of the NNStreamer pipeline string
+                val mFile = App.context().getExternalFilesDir("models")?.resolve(model.models)
+                val inTypes = model.inputInfo["type"]?.let {
+                    "types=${model.inputInfo["type"]?.joinToString(",")}"
+                } ?: ""
+                val inDims = model.inputInfo["dimension"]?.let {
+                    "dimensions=(string)${model.inputInfo["dimension"]?.joinToString(",")}"
+                } ?: ""
+                val outTypes = model.outputInfo["type"]?.let {
+                    "types=${model.outputInfo["type"]?.joinToString(",")}"
+                } ?: ""
+                val outDims = model.outputInfo["dimension"]?.let {
+                    "dimensions=(string)${model.outputInfo["dimension"]?.joinToString(",")}"
+                } ?: ""
+                val filter =
+                    "other/tensors,num_tensors=${model.inputInfo["type"]?.size ?: 1},format=static,${inDims},${inTypes},framerate=0/1 ! " +
+                            "tensor_filter framework=tensorflow-lite model=${mFile} ! " +
+                            "other/tensors,num_tensors=${model.outputInfo["type"]?.size ?: 1},format=static,${outDims},${outTypes},framerate=0/1"
                 val port = findPort()
-                // TODO: This is a temporary desc and must be updated to use model info correctly
                 val desc =
                     "tensor_query_serversrc id=" + serviceId.toString() + " host=" + hostAddress + " port=" +
-                            port.toString() + " ! " + model.name + " ! tensor_query_serversink async=false id=" + serviceId.toString()
+                            port.toString() + " ! " + filter + " ! tensor_query_serversink async=false id=" + serviceId.toString()
 
                 CoroutineScope(Dispatchers.IO).launch {
                     val stateCb = PipelineCallback(serviceId, model.uid, port)
