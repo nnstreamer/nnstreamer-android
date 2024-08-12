@@ -12,13 +12,9 @@ import androidx.compose.ui.Modifier
 // TODO: This is a temporary function to create test buttons
 @Composable
 fun ButtonList(
-    onCreateModel: () -> Unit,
     onLoadModel: () -> Unit,
 ) {
     Column {
-        Button(onClick = { onCreateModel() }) {
-            Text("Create models")
-        }
         Button(onClick = { onLoadModel() }) {
             Text("Load models")
         }
