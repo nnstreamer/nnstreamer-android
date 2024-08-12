@@ -3,6 +3,7 @@ package ai.nnstreamer.ml.inference.offloading.data
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
 
@@ -47,6 +48,17 @@ data class Model(
                 modelPaths.add(File(model).name)
             }
             models = modelPaths.joinToString(",")
+        }.onFailure { e ->
+            when (e) {
+                is JSONException -> {
+                    val model = jsonObject.getString("model")
+                    models = File(model).name
+                }
+
+                else -> {
+                    throw e
+                }
+            }
         }.exceptionOrNull()
 
         listOf("input_info", "output_info").forEach { prop ->
