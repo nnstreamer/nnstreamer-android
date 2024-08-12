@@ -13,44 +13,12 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-    - name: Free unused disk space
-      shell: bash
-      run: |
-        sudo apt-get update --fix-missing
-        sudo apt-get remove -y '^dotnet-.*'
-        sudo apt-get remove -y '^llvm-.*'
-        sudo apt-get remove -y '^mysql-server-core-.*'
-        sudo apt-get remove -y '^postgresql-.*'
-        sudo apt-get remove -y azure-cli google-chrome-stable google-cloud-cli firefox powershell microsoft-edge-stable mono-devel
-        sudo apt-get purge docker-ce docker-ce-cli
-        sudo apt-get autoremove -y
-
-        sudo rm -rf /usr/share/dotnet/
-        sudo rm -rf /usr/share/swift
-        sudo rm -rf /usr/share/miniconda
-        sudo rm -rf /usr/local/graalvm/
-        sudo rm -rf /usr/local/.ghcup/
-        sudo rm -rf /usr/local/share/powershell
-        sudo rm -rf /usr/local/share/chromium
-        sudo rm -rf /usr/local/lib/node_modules
-        sudo rm -rf /var/lib/docker
-        sudo rm -rf /var/lib/apt/lists
-    - uses: nttld/setup-ndk@v1
-      id: setup-ndk
-      with:
-        ndk-version: r25c
-        link-to-sdk: true
     - uses: actions/checkout@v4
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: -${{ github.event.pull_request.commits }}
-    - name: Setup Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: 17
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
+    - name: Set up android build
+      uses: ./.github/actions/set-up
     - name: Run build
       run: ./gradlew build
     - name: Upload test reports
