@@ -4,6 +4,7 @@ import ai.nnstreamer.ml.inference.offloading.App
 import ai.nnstreamer.ml.inference.offloading.R
 import ai.nnstreamer.ml.inference.offloading.data.Model
 import ai.nnstreamer.ml.inference.offloading.data.ModelRepositoryImpl
+import ai.nnstreamer.ml.inference.offloading.data.PreferencesDataStore
 import ai.nnstreamer.ml.inference.offloading.data.PreferencesDataStoreImpl
 import android.content.Context
 import android.util.Log
