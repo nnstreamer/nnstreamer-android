@@ -10,6 +10,7 @@ plugins {
 buildscript {
     dependencies {
         classpath(libs.tukaani.xz)
+        classpath(libs.dokka.base)
     }
 }
 

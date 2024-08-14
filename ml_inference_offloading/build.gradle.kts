@@ -1,3 +1,7 @@
+import org.jetbrains.dokka.base.DokkaBase
+import org.jetbrains.dokka.base.DokkaBaseConfiguration
+import org.jetbrains.dokka.gradle.DokkaTask
+
 plugins {
     id(libs.plugins.androidApplication.get().pluginId)
     id(libs.plugins.googleDevtoolsKsp.get().pluginId)
@@ -52,6 +56,24 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+        }
+    }
+}
+
+tasks {
+    withType<DokkaTask>().configureEach {
+        pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
+            separateInheritedMembers = false
+            mergeImplicitExpectActualDeclarations = false
+        }
+
+        dokkaSourceSets.configureEach {
+            perPackageOption {
+                suppressInheritedMembers.set(true)
+                suppressObviousFunctions.set(false)
+                reportUndocumented.set(false)
+                skipEmptyPackages.set(true)
+            }
         }
     }
 }
