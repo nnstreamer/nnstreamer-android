@@ -6,6 +6,15 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import org.nnsuite.nnstreamer.Pipeline
 
+/**
+ * Represents an offloading service associated with a specific model.
+ *
+ * @property serviceId The unique identifier for the offloading service.
+ * @property modelId The identifier for the model associated with this offloading service.
+ * @property port The port number used by the offloading service.
+ * @property state The state of the pipeline associated with this offloading service.
+ * @property framerate The framerate of the offloading service.
+ */
 @Entity(
     tableName = "offloadingservices",
     foreignKeys = [
