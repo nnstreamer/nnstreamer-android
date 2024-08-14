@@ -9,7 +9,7 @@ import javax.inject.Singleton
  * The class that implements the ModelRepository interface.
  *
  * @constructor Creates a singleton instance of the ModelRepositoryImpl class.
- * @pram modelDao The ModelDao object that is used to access the database.
+ * @param modelDao The ModelDao object that is used to access the database.
  */
 @Singleton
 class ModelRepositoryImpl @Inject constructor(private val modelDao: ModelDao) :
@@ -25,7 +25,7 @@ class ModelRepositoryImpl @Inject constructor(private val modelDao: ModelDao) :
     /**
      * Get the stream of [Model]s by [uid] from the database by using [modelDao].
      *
-     * @param uid the unique identifier that represents a specific [Model]
+     * @param uid the unique identifier that represents a specific [Model].
      * @return A [Flow] of the [Model]s matching the [uid].
      * @see [ModelRepository.getModelStream]
      */

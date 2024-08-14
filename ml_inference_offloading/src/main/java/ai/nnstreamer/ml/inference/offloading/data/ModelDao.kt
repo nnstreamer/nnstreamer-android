@@ -38,7 +38,7 @@ interface ModelDao {
     /**
      * Retrieve a [Model] by [uid] from the models table.
      *
-     * @param uid the unique identifier that represents a specific [Model] in the table
+     * @param uid the unique identifier that represents a specific [Model] in the table.
      * @return A [Flow] of the matching [Model]s.
      */
     @Query("SELECT * from models WHERE uid = :uid")

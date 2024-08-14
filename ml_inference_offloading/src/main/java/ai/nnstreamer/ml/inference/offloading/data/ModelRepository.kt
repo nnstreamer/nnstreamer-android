@@ -14,7 +14,7 @@ interface ModelRepository {
     /**
      * Get the stream of [Model]s by [uid] from the database.
      *
-     * @param uid the unique identifier that represents a specific [Model]
+     * @param uid the unique identifier that represents a specific [Model].
      * @return A [Flow] of the [Model]s matching the [uid].
      */
     fun getModelStream(uid: Int): Flow<Model?>

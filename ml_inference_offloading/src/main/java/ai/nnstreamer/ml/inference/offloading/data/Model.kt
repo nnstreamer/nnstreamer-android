@@ -16,10 +16,10 @@ import java.io.File
  * @property inputInfo A map that represents the input information of the model.
  * @property outputInfo A map that represents the output information of the model.
  * @property optionalInfo A map that extensible information of the model.
- * @pram uid The unique ID of the model.
- * @pram name The name that represents this model.
- * @pram jsonObject The JSON object corresponding to 'single'.
- * @pram optionalJsonObject The JSON object corresponding to 'information'.
+ * @param uid The unique ID of the model.
+ * @param name The name that represents this model.
+ * @param jsonObject The JSON object corresponding to 'single'.
+ * @param optionalJsonObject The JSON object corresponding to 'information'.
  */
 @Entity(tableName = "models")
 data class Model(
