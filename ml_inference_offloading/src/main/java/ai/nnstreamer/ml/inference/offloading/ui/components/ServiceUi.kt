@@ -21,6 +21,14 @@ fun ButtonList(
     }
 }
 
+/**
+ * Composable function to display a list of offloading services along with buttons to control their states.
+ *
+ * @param services The list of [OffloadingServiceUiState]s to be displayed.
+ * @param onClickStart Callback to be invoked when the "Start" button is clicked.
+ * @param onClickStop Callback to be invoked when the "Stop" button is clicked.
+ * @param onClickDestroy Callback to be invoked when the "Destroy" button is clicked.
+ */
 @Composable
 fun ServiceList(
     services: List<OffloadingServiceUiState>,
