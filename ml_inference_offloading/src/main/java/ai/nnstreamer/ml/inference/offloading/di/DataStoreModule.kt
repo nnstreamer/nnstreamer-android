@@ -2,6 +2,7 @@ package ai.nnstreamer.ml.inference.offloading.di
 
 import ai.nnstreamer.ml.inference.offloading.data.PreferencesDataStore
 import ai.nnstreamer.ml.inference.offloading.data.PreferencesDataStoreImpl
+import ai.nnstreamer.ml.inference.offloading.di.DataStoreModule.SHARED_PREFERENCES
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
@@ -18,10 +19,22 @@ import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
 
+/**
+ * A Module to provide DataStore instances.
+ * This module is mainly responsible for creating and configuring the [DataStore]<[Preferences]> instance.
+ *
+ * @property SHARED_PREFERENCES the name of the shared preferences file to store the data store preferences.
+ */
 @Module
 object DataStoreModule {
     private const val SHARED_PREFERENCES = "shared_preferences"
 
+    /**
+     * Provide a [DataStore]<[Preferences]> instance.
+     *
+     * @param appContext the application context.
+     * @return a [DataStore]<[Preferences]> instance.
+     */
     @Provides
     @Singleton
     fun provideDataStore(appContext: Context): DataStore<Preferences> {
@@ -35,6 +48,12 @@ object DataStoreModule {
         )
     }
 
+    /**
+     * Provide a [PreferencesDataStore] instance.
+     *
+     * @param dataStore the instance of [DataStore]<[Preferences]>.
+     * @return a [PreferencesDataStore] instance.
+     */
     @Provides
     @Singleton
     fun providePreferencesStorage(dataStore: DataStore<Preferences>): PreferencesDataStore =
