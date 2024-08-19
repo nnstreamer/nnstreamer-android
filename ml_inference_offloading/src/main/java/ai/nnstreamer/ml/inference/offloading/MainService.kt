@@ -17,13 +17,13 @@ import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdManager.RegistrationListener
 import android.net.nsd.NsdServiceInfo
-import android.os.Binder
 import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Looper
 import android.os.Message
+import android.os.Messenger
 import android.os.Process
 import android.util.Log
 import android.widget.Toast
@@ -41,6 +41,13 @@ import java.net.ServerSocket
 import javax.inject.Inject
 import kotlin.concurrent.thread
 
+enum class MessageType(val value: Int) {
+    LOAD_MODELS(0),
+    START_MODEL(1),
+    STOP_MODEL(2),
+    DESTROY_MODEL(3)
+}
+
 data class OffloadingServiceStatus(
     val pipeline: Pipeline,
     val registrationListener: RegistrationListener,
@@ -49,14 +56,17 @@ data class OffloadingServiceStatus(
 class MainService : Service() {
     private inner class MainHandler(looper: Looper) : Handler(looper) {
         override fun handleMessage(msg: Message) {
-            super.handleMessage(msg)
-            try {
-                // Sleep for 10 secs
-                Thread.sleep(10000)
-            } catch (e: InterruptedException) {
-                Thread.currentThread().interrupt()
+            when (msg.what) {
+                MessageType.LOAD_MODELS.value ->
+                    loadModels()
+                MessageType.START_MODEL.value ->
+                    startService(msg.arg1)
+                MessageType.STOP_MODEL.value ->
+                    stopService(msg.arg1)
+                MessageType.DESTROY_MODEL.value ->
+                    destroyService(msg.arg1)
+                else -> super.handleMessage(msg)
             }
-            stopSelf(msg.arg1)
         }
     }
 
@@ -111,12 +121,7 @@ class MainService : Service() {
         }
     }
 
-    inner class LocalBinder : Binder() {
-        fun getService(): MainService = this@MainService
-    }
-
     private val TAG = "MainService"
-    private val binder = LocalBinder()
 
     private val isRunningOnEmulator: Boolean
         get() = (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
@@ -155,7 +160,7 @@ class MainService : Service() {
     private var initialized = false
     private var serviceMap = mutableMapOf<Int, OffloadingServiceStatus>()
     private lateinit var nsdManager: NsdManager
-
+    private lateinit var mMessenger: Messenger
 
     private fun startForeground() {
         // Get NotificationManager
@@ -220,6 +225,7 @@ class MainService : Service() {
         serviceLooper = handlerThread.looper
         serviceHandler = MainHandler(serviceLooper)
         nsdManager = (getSystemService(Context.NSD_SERVICE) as NsdManager)
+        mMessenger = Messenger(serviceHandler)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -237,7 +243,7 @@ class MainService : Service() {
     }
 
     override fun onBind(intent: Intent): IBinder {
-        return binder
+        return mMessenger.binder
     }
 
     override fun onDestroy() {
@@ -312,39 +318,39 @@ class MainService : Service() {
         return port
     }
 
-    suspend fun loadModels() {
+    fun loadModels() {
         val hostAddress = getIpAddress()
         val models = modelsRepository.getAllModelsStream()
 
-        models.collect {
-            it.forEach { model ->
-                val serviceId = runBlocking {
-                    preferencesDataStore.getIncrementalCounter()
-                }
-                // TODO: The following code for generation of the NNStreamer pipeline string
-                val mFile = App.context().getExternalFilesDir("models")?.resolve(model.models)
-                val inTypes = model.inputInfo["type"]?.let {
-                    "types=${model.inputInfo["type"]?.joinToString(",")}"
-                } ?: ""
-                val inDims = model.inputInfo["dimension"]?.let {
-                    "dimensions=(string)${model.inputInfo["dimension"]?.joinToString(",")}"
-                } ?: ""
-                val outTypes = model.outputInfo["type"]?.let {
-                    "types=${model.outputInfo["type"]?.joinToString(",")}"
-                } ?: ""
-                val outDims = model.outputInfo["dimension"]?.let {
-                    "dimensions=(string)${model.outputInfo["dimension"]?.joinToString(",")}"
-                } ?: ""
-                val filter =
-                    "other/tensors,num_tensors=${model.inputInfo["type"]?.size ?: 1},format=static,${inDims},${inTypes},framerate=0/1 ! " +
-                            "tensor_filter framework=tensorflow-lite model=${mFile} ! " +
-                            "other/tensors,num_tensors=${model.outputInfo["type"]?.size ?: 1},format=static,${outDims},${outTypes},framerate=0/1"
-                val port = findPort()
-                val desc =
-                    "tensor_query_serversrc id=" + serviceId.toString() + " host=" + hostAddress + " port=" +
-                            port.toString() + " ! " + filter + " ! tensor_query_serversink async=false id=" + serviceId.toString()
+        CoroutineScope(Dispatchers.IO).launch {
+            models.collect {
+                it.forEach { model ->
+                    val serviceId = runBlocking {
+                        preferencesDataStore.getIncrementalCounter()
+                    }
+                    // TODO: The following code for generation of the NNStreamer pipeline string
+                    val mFile = App.context().getExternalFilesDir("models")?.resolve(model.models)
+                    val inTypes = model.inputInfo["type"]?.let {
+                        "types=${model.inputInfo["type"]?.joinToString(",")}"
+                    } ?: ""
+                    val inDims = model.inputInfo["dimension"]?.let {
+                        "dimensions=(string)${model.inputInfo["dimension"]?.joinToString(",")}"
+                    } ?: ""
+                    val outTypes = model.outputInfo["type"]?.let {
+                        "types=${model.outputInfo["type"]?.joinToString(",")}"
+                    } ?: ""
+                    val outDims = model.outputInfo["dimension"]?.let {
+                        "dimensions=(string)${model.outputInfo["dimension"]?.joinToString(",")}"
+                    } ?: ""
+                    val filter =
+                        "other/tensors,num_tensors=${model.inputInfo["type"]?.size ?: 1},format=static,${inDims},${inTypes},framerate=0/1 ! " +
+                                "tensor_filter framework=tensorflow-lite model=${mFile} ! " +
+                                "other/tensors,num_tensors=${model.outputInfo["type"]?.size ?: 1},format=static,${outDims},${outTypes},framerate=0/1"
+                    val port = findPort()
+                    val desc =
+                        "tensor_query_serversrc id=" + serviceId.toString() + " host=" + hostAddress + " port=" +
+                                port.toString() + " ! " + filter + " ! tensor_query_serversink async=false id=" + serviceId.toString()
 
-                CoroutineScope(Dispatchers.IO).launch {
                     val stateCb = PipelineCallback(serviceId, model.uid, port)
                     val pipeline = Pipeline(desc, stateCb)
                     val registrationListener = NsdRegistrationListener()

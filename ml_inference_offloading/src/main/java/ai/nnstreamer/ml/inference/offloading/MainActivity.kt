@@ -10,6 +10,8 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
+import android.os.Message
+import android.os.Messenger
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -19,21 +21,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
-    private var mService: MainService? = null
+    private var mService: Messenger? = null
 
     @Inject
     lateinit var mViewModel: MainViewModel
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            val binder = service as MainService.LocalBinder
-            mService = binder.getService()
+            mService = Messenger(service)
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
@@ -55,13 +54,47 @@ class MainActivity : ComponentActivity() {
             }
             Column {
                 ButtonList(
-                    onLoadModel = { lifecycleScope.launch { mService?.loadModels() } }
+                    onLoadModel = {
+                        mService?.send(
+                            Message.obtain(
+                                null,
+                                MessageType.LOAD_MODELS.value
+                            )
+                        )
+                    }
                 )
                 ServiceList(
                     mViewModel.services.collectAsState().value,
-                    onClickStart = { id -> mService?.startService(id) },
-                    onClickStop = { id -> mService?.stopService(id) },
-                    onClickDestroy = { id -> mService?.destroyService(id) })
+                    onClickStart = { id ->
+                        mService?.send(
+                            Message.obtain(
+                                null,
+                                MessageType.START_MODEL.value,
+                                id,
+                                0
+                            )
+                        )
+                    },
+                    onClickStop = { id ->
+                        mService?.send(
+                            Message.obtain(
+                                null,
+                                MessageType.STOP_MODEL.value,
+                                id,
+                                0
+                            )
+                        )
+                    },
+                    onClickDestroy = { id ->
+                        mService?.send(
+                            Message.obtain(
+                                null,
+                                MessageType.DESTROY_MODEL.value,
+                                id,
+                                0
+                            )
+                        )
+                    })
             }
         }
         startForegroundService(Intent(this, MainService::class.java))
