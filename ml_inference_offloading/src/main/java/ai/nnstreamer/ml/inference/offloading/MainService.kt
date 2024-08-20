@@ -41,6 +41,9 @@ import java.net.ServerSocket
 import javax.inject.Inject
 import kotlin.concurrent.thread
 
+/**
+ * Enum class representing different types of messages that can be sent.
+ */
 enum class MessageType(val value: Int) {
     LOAD_MODELS(0),
     START_MODEL(1),
@@ -48,23 +51,38 @@ enum class MessageType(val value: Int) {
     DESTROY_MODEL(3)
 }
 
+/**
+ * Data class representing the status of an offloading service.
+ *
+ * @property pipeline the pipeline associated with the offloading service.
+ * @property registrationListener the registration listener associated with the offloading service.
+ */
 data class OffloadingServiceStatus(
     val pipeline: Pipeline,
     val registrationListener: RegistrationListener,
 )
 
+/**
+ * Main service class for ML inference offloading.
+ *
+ * @constructor Creates the Main Service.
+ */
 class MainService : Service() {
     private inner class MainHandler(looper: Looper) : Handler(looper) {
         override fun handleMessage(msg: Message) {
             when (msg.what) {
                 MessageType.LOAD_MODELS.value ->
                     loadModels()
+
                 MessageType.START_MODEL.value ->
                     startService(msg.arg1)
+
                 MessageType.STOP_MODEL.value ->
                     stopService(msg.arg1)
+
                 MessageType.DESTROY_MODEL.value ->
                     destroyService(msg.arg1)
+
                 else -> super.handleMessage(msg)
             }
         }
@@ -148,12 +166,21 @@ class MainService : Service() {
     private lateinit var serviceLooper: Looper
     private lateinit var handlerThread: HandlerThread
 
+    /**
+     * Models repository instance for accessing model data.
+     */
     @Inject
     lateinit var modelsRepository: ModelRepositoryImpl
 
+    /**
+     * Offloading service repository instance for accessing offloading service data.
+     */
     @Inject
     lateinit var offloadingServiceRepositoryImpl: OffloadingServiceRepositoryImpl
 
+    /**
+     * Preferences data store instance for accessing preference data.
+     */
     @Inject
     lateinit var preferencesDataStore: PreferencesDataStoreImpl
 
@@ -206,6 +233,11 @@ class MainService : Service() {
         )
     }
 
+    /**
+     * A lifecycle callback method that overrides [Service.onCreate].
+     *
+     * This callback is invoked when the service is being created.
+     */
     override fun onCreate() {
         // Dependency Injection to AppComponent
         App.instance.appComponent.inject(this)
@@ -228,6 +260,11 @@ class MainService : Service() {
         mMessenger = Messenger(serviceHandler)
     }
 
+    /**
+     * A lifecycle callback method that overrides [Service.onStartCommand].
+     *
+     * This callback is invoked by the system every time a client explicitly starts the service.
+     */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Toast.makeText(this, "Starting the MainService", Toast.LENGTH_SHORT).show()
 
@@ -242,10 +279,20 @@ class MainService : Service() {
         return START_STICKY
     }
 
+    /**
+     * A lifecycle callback method that overrides [Service.onBind].
+     *
+     * @return the communication channel to the service.
+     */
     override fun onBind(intent: Intent): IBinder {
         return mMessenger.binder
     }
 
+    /**
+     * A lifecycle callback method that overrides [Service.onDestroy].
+     *
+     * This callback is invoked by the system to notify a Service that it is no longer used and is being removed.
+     */
     override fun onDestroy() {
         serviceMap.forEach { service ->
             val pipeline = service.value.pipeline
