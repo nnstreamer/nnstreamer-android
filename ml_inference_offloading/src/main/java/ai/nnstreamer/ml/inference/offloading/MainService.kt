@@ -318,7 +318,7 @@ class MainService : Service() {
         return port
     }
 
-    fun loadModels() {
+    private fun loadModels() {
         val hostAddress = getIpAddress()
         val models = modelsRepository.getAllModelsStream()
 
@@ -374,15 +374,15 @@ class MainService : Service() {
         }
     }
 
-    fun startService(id: Int) {
+    private fun startService(id: Int) {
         serviceMap[id]?.pipeline?.start()
     }
 
-    fun stopService(id: Int) {
+    private fun stopService(id: Int) {
         serviceMap[id]?.pipeline?.stop()
     }
 
-    fun destroyService(id: Int) {
+    private fun destroyService(id: Int) {
         serviceMap[id]?.pipeline?.close()
         serviceMap.remove(id)
         CoroutineScope(Dispatchers.IO).launch {
