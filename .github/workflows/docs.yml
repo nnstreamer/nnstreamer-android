@@ -1,10 +1,12 @@
 name: Create KDoc documentation
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  docs:
+  build-dokkaHtml:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
@@ -17,5 +19,45 @@ jobs:
     - name: Upload docs
       uses: actions/upload-artifact@v4
       with:
-        name: docs
+        name: kdoc
         path: ml_inference_offloading/build/dokka/html
+
+  build-jekyll:
+    runs-on: ubuntu-22.04
+    needs: build-dokkaHtml
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Download DokkaHTML
+      uses: actions/download-artifact@v4
+      with:
+        name: kdoc
+        path: ./KDoc
+    - name: Setup Pages
+      uses: actions/configure-pages@v5
+    - name: Build with Jekyll
+      uses: actions/jekyll-build-pages@v1
+      with:
+        source: ./
+        destination: ./_site
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+
+  deploy-gh-pages:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    needs: build-jekyll
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      # environment created automatically by GitHub
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
