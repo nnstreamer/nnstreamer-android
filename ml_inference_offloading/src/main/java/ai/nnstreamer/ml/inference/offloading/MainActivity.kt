@@ -23,6 +23,17 @@ import androidx.compose.ui.Modifier
 
 import javax.inject.Inject
 
+/**
+ * The Main Activity class is the application's main entry point.
+ *
+ * It hosts the user interface to control the [MainService] component and demonstrates the ML use case,
+ * which delegates the ML Task to [MainService].
+ *
+ * @property TAG Log tag for this class. Used for logging purposes.
+ * @property mService Messenger instance to communicate with the [MainService].
+ * @property mViewModel ViewModel instance for this activity.
+ * @property connection ServiceConnection instance to bind to the [MainService].
+ */
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
     private var mService: Messenger? = null
@@ -40,6 +51,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * A lifecycle callback method that overrides [ComponentActivity.onCreate].
+     *
+     * This callback is invoked when the Activity is being created.
+     *
+     * @param savedInstanceState The saved instance state of the activity.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         // Dependency Injection
         (application as App).appComponent.inject(this)
@@ -100,6 +118,11 @@ class MainActivity : ComponentActivity() {
         startForegroundService(Intent(this, MainService::class.java))
     }
 
+    /**
+     * A lifecycle callback method that overrides [ComponentActivity.onStart].
+     *
+     * This callback is invoked when the Activity is being started. It binds the Activity to the service.
+     */
     override fun onStart() {
         super.onStart()
         Intent(this, MainService::class.java).also { intent ->
@@ -107,6 +130,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * A lifecycle callback method that overrides [ComponentActivity.onStop].
+     *
+     * This callback is invoked when the Activity is being stopped. It unbinds the Activity from the service.
+     */
     override fun onStop() {
         super.onStop()
         unbindService(connection)
