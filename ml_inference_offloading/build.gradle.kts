@@ -126,5 +126,6 @@ dependencies {
 
     // Dokka
     implementation(libs.dokka.base)
+    dokkaPlugin(libs.dokka.mermaid)
     compileOnly(libs.dokka.core)
 }

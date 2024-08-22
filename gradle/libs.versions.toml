@@ -9,6 +9,7 @@ coreKtx = "1.12.0"
 dagger = "2.51.1"
 datastore = "1.1.1"
 dokka = "1.9.20"
+dokka-mermaid = "0.6.0"
 espressoCore = "3.5.1"
 google-devtools-ksp = "1.9.23-1.0.19"
 gson = "2.11.0"
@@ -31,6 +32,7 @@ dagger = { module = "com.google.dagger:dagger", version.ref = "dagger" }
 dagger-compiler = { module = "com.google.dagger:dagger-compiler", version.ref = "dagger" }
 dokka-base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "dokka" }
 dokka-core = { module = "org.jetbrains.dokka:dokka-core", version.ref = "dokka" }
+dokka-mermaid = { module = "com.glureau:html-mermaid-dokka-plugin", version.ref = "dokka-mermaid" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
