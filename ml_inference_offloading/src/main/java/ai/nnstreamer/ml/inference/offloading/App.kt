@@ -8,6 +8,24 @@ import android.content.Context
 /**
  * Application class for providing Application context and DI component.
  *
+ * ```mermaid
+ * graph TD
+ *   subgraph MainViewModel
+ *     OffloadingServiceUiState
+ *   end
+ *   subgraph Data
+ *     DAO --> SQLite
+ *     SQLite --> DAO
+ *     Model
+ *     OffloadingService
+ *   end
+ *   MainActivity --> MainViewModel
+ *   MainViewModel --> Repository
+ *   Repository --> Data
+ *   MainService --> Repository
+ *   MainActivity -- bind --> MainService
+ * ```
+ *
  * @property instance The singleton instance of the application. This is used to provide the application context.
  * @property appComponent The Dagger component that provides dependencies for the application.
  */
