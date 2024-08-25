@@ -1,5 +1,7 @@
 # A Single APK integration of NNStreamer and ML API
 
+[![Dokka](https://img.shields.io/badge/Kdoc-7F52FF.svg?style=for-the-badge&logo=kotlin&logoColor=white)](https://nnstreamer.github.io/nnstreamer-android/KDoc/)
+
 This project offers a single Android application package (APK) solution for on-device Machine
 Learning Operations (MLOps). As one of the core components, this APK includes an Android Service
 that uses [ML API](https://github.com/nnstreamer/api) to maintain
@@ -11,6 +13,10 @@ controls the Service's features. This Activity enables users to supervise the ML
 pipelines while hosting a user interface to visualize the results of the ML computations.
 In addition, sample applications are provided as concrete examples to demonstrate how to use the
 Service to perform external ML computation offloading and internal delegation of ML task requests.
+
+## Documentation
+
+- [KDoc](https://kotlinlang.org/docs/kotlin-doc.html) documentation generated from Kotlin source code is available at [here](https://nnstreamer.github.io/nnstreamer-android/KDoc/).
 
 ## Disclaimer
 
