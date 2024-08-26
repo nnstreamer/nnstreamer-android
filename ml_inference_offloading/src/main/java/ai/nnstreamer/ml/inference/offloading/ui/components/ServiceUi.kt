@@ -9,11 +9,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-// TODO: This is a temporary function to create test buttons
+/**
+ * Composable function to load models in the device.
+ *
+ * This is a temporary function to create a button for the test purpose.
+ * It will be replaced by a proper UI component later.
+ *
+ * @param onLoadModel Callback to be invoked when the "Load Models" button is clicked.
+ */
 @Composable
 fun ButtonList(
     onLoadModel: () -> Unit,
 ) {
+    // TODO: Create a proper UI component for this functionality. This is just a placeholder for now.
     Column {
         Button(onClick = { onLoadModel() }) {
             Text("Load models")
