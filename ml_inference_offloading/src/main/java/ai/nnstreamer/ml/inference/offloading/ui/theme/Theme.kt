@@ -37,6 +37,13 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+/**
+ *  A Composable that initializes the MaterialTheme for the app.
+ *
+ *  @param darkTheme Whether to use a dark theme or not.
+ *  @param dynamicColor Whether to use dynamic colors or not.
+ *  @param content The content of the app.
+ */
 @Composable
 fun NnstreamerandroidTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
