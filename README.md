@@ -16,7 +16,18 @@ Service to perform external ML computation offloading and internal delegation of
 
 ## Documentation
 
-- [KDoc](https://kotlinlang.org/docs/kotlin-doc.html) documentation generated from Kotlin source code is available at [here](https://nnstreamer.github.io/nnstreamer-android/KDoc/).
+- [KDoc](https://kotlinlang.org/docs/kotlin-doc.html) documentation generated from Kotlin source
+  code is available at [here](https://nnstreamer.github.io/nnstreamer-android/KDoc/).
+
+## Use-Case Scenarios
+
+### Tizen-to-Android ML Offloading
+
+#### [Getting Started](documentation/getting_started.md)
+
+#### Component Interaction Diagram
+
+![Component Interaction Diagram for the Tizen-to-Android Scenario](documentation/img/Tizen-to-Android.png)
 
 ## Disclaimer
 
