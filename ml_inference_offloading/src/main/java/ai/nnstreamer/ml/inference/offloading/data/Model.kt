@@ -1,5 +1,6 @@
 package ai.nnstreamer.ml.inference.offloading.data
 
+import ai.nnstreamer.ml.inference.offloading.App
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -111,4 +112,36 @@ data class Model(
     var outputInfo: Map<String, List<String>> = mapOf()
 
     var optionalInfo: Map<String, String> = mapOf()
+
+    /**
+     * Get NNS filter description string for the given model. This is used to create a new NNS pipeline instance.
+     * @return NNS filter description string. It includes paths of the model files and other information.
+     */
+    fun getNNSFilterDesc(): String {
+        val basePath = App.context().getExternalFilesDir("models")
+        val modelPaths = models.split(",").run {
+            joinToString(
+                separator = ",",
+                transform = { basePath?.resolve(it).toString() }
+            )
+        }
+        val inTypes = inputInfo["type"]?.let {
+            "types=${inputInfo["type"]?.joinToString(",")}"
+        } ?: ""
+        val inDims = inputInfo["dimension"]?.let {
+            "dimensions=(string)${inputInfo["dimension"]?.joinToString(",")}"
+        } ?: ""
+        val outTypes = outputInfo["type"]?.let {
+            "types=${outputInfo["type"]?.joinToString(",")}"
+        } ?: ""
+        val outDims = outputInfo["dimension"]?.let {
+            "dimensions=(string)${outputInfo["dimension"]?.joinToString(",")}"
+        } ?: ""
+        val filter =
+            "other/tensors,num_tensors=${inputInfo["type"]?.size ?: 1},format=static,${inDims},${inTypes},framerate=0/1 ! " +
+                    "tensor_filter framework=tensorflow-lite model=${modelPaths} ! " +
+                    "other/tensors,num_tensors=${outputInfo["type"]?.size ?: 1},format=static,${outDims},${outTypes},framerate=0/1"
+
+        return filter
+    }
 }

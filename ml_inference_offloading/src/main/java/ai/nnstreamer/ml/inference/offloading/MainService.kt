@@ -375,24 +375,7 @@ class MainService : Service() {
                     val serviceId = runBlocking {
                         preferencesDataStore.getIncrementalCounter()
                     }
-                    // TODO: The following code for generation of the NNStreamer pipeline string
-                    val mFile = App.context().getExternalFilesDir("models")?.resolve(model.models)
-                    val inTypes = model.inputInfo["type"]?.let {
-                        "types=${model.inputInfo["type"]?.joinToString(",")}"
-                    } ?: ""
-                    val inDims = model.inputInfo["dimension"]?.let {
-                        "dimensions=(string)${model.inputInfo["dimension"]?.joinToString(",")}"
-                    } ?: ""
-                    val outTypes = model.outputInfo["type"]?.let {
-                        "types=${model.outputInfo["type"]?.joinToString(",")}"
-                    } ?: ""
-                    val outDims = model.outputInfo["dimension"]?.let {
-                        "dimensions=(string)${model.outputInfo["dimension"]?.joinToString(",")}"
-                    } ?: ""
-                    val filter =
-                        "other/tensors,num_tensors=${model.inputInfo["type"]?.size ?: 1},format=static,${inDims},${inTypes},framerate=0/1 ! " +
-                                "tensor_filter framework=tensorflow-lite model=${mFile} ! " +
-                                "other/tensors,num_tensors=${model.outputInfo["type"]?.size ?: 1},format=static,${outDims},${outTypes},framerate=0/1"
+                    val filter = model.getNNSFilterDesc()
                     val port = findPort()
                     val desc =
                         "tensor_query_serversrc id=" + serviceId.toString() + " host=" + hostAddress + " port=" +
