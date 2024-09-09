@@ -4,6 +4,7 @@ import ai.nnstreamer.ml.inference.offloading.ui.MainViewModel
 import ai.nnstreamer.ml.inference.offloading.ui.components.ButtonList
 import ai.nnstreamer.ml.inference.offloading.ui.components.ServiceList
 import ai.nnstreamer.ml.inference.offloading.ui.theme.NnstreamerandroidTheme
+import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -14,14 +15,60 @@ import android.os.Message
 import android.os.Messenger
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Api
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.outlined.Api
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import javax.inject.Inject
+
+data class NavigationItem(
+    val title: String,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector,
+    val badgeCount: Int? = null,
+    val screen: Any,
+)
 
 /**
  * The Main Activity class is the application's main entry point.
@@ -58,61 +105,194 @@ class MainActivity : ComponentActivity() {
      *
      * @param savedInstanceState The saved instance state of the activity.
      */
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         // Dependency Injection
         (application as App).appComponent.inject(this)
         super.onCreate(savedInstanceState)
         setContent {
             NnstreamerandroidTheme {
-                // A surface container using the 'background' color from the theme
+                val navController = rememberNavController()
+                val items = listOf(
+                    NavigationItem(
+                        title = "MLAgent",
+                        selectedIcon = Icons.Filled.Api,
+                        unselectedIcon = Icons.Outlined.Api,
+                        screen = ScreenMLAgent,
+                    ),
+                    NavigationItem(
+                        title = "Vision Examples",
+                        selectedIcon = Icons.Filled.Videocam,
+                        unselectedIcon = Icons.Outlined.Videocam,
+                        screen = ScreenVisionExample,
+                    ),
+                    NavigationItem(
+                        title = "Settings",
+                        selectedIcon = Icons.Filled.Settings,
+                        unselectedIcon = Icons.Outlined.Settings,
+                        screen = ScreenSettings(msg = "Setting UI Screen will be here")
+                    ),
+                )
+
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) { }
-            }
-            Column {
-                ButtonList(
-                    onLoadModel = {
-                        mService?.send(
-                            Message.obtain(
-                                null,
-                                MessageType.LOAD_MODELS.value
-                            )
-                        )
+                    color = colorScheme.background
+                ) {
+                    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                    val scope = rememberCoroutineScope()
+                    var selectedItemIndex by rememberSaveable {
+                        mutableIntStateOf(0)
                     }
-                )
-                ServiceList(
-                    mViewModel.services.collectAsState().value,
-                    onClickStart = { id ->
-                        mService?.send(
-                            Message.obtain(
-                                null,
-                                MessageType.START_MODEL.value,
-                                id,
-                                0
-                            )
-                        )
-                    },
-                    onClickStop = { id ->
-                        mService?.send(
-                            Message.obtain(
-                                null,
-                                MessageType.STOP_MODEL.value,
-                                id,
-                                0
-                            )
-                        )
-                    },
-                    onClickDestroy = { id ->
-                        mService?.send(
-                            Message.obtain(
-                                null,
-                                MessageType.DESTROY_MODEL.value,
-                                id,
-                                0
-                            )
-                        )
-                    })
+
+                    ModalNavigationDrawer(
+                        drawerContent = {
+                            ModalDrawerSheet {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                items.forEachIndexed { index, item ->
+                                    NavigationDrawerItem(
+                                        label = {
+                                            Text(text = item.title)
+                                        },
+                                        selected = index == selectedItemIndex,
+                                        onClick = {
+                                            selectedItemIndex = index
+                                            scope.launch {
+                                                drawerState.close()
+                                            }
+                                            navController.navigate(item.screen) {
+                                                popUpTo(navController.graph.id) {
+                                                    inclusive = true
+                                                }
+                                            }
+                                        },
+                                        icon = {
+                                            Icon(
+                                                imageVector = if (index == selectedItemIndex) {
+                                                    item.selectedIcon
+                                                } else {
+                                                    item.unselectedIcon
+                                                },
+                                                contentDescription = item.title
+                                            )
+                                        },
+                                        badge = {
+                                            item.badgeCount?.let {
+                                                Text(text = item.badgeCount.toString())
+                                            }
+                                        },
+                                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    ) // NavigationDrawerItem
+                                }
+                            } // ModalDrawerSheet
+                        },
+                        drawerState = drawerState,
+                    ) {
+                        Scaffold(
+                            topBar = {
+                                TopAppBar(
+                                    title = { Text(text = "NNStreamer Android") },
+                                    navigationIcon = {
+                                        IconButton(onClick = {
+                                            scope.launch {
+                                                drawerState.open()
+                                            }
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Menu,
+                                                contentDescription = "Menu"
+                                            )
+                                        }
+                                    }
+                                )
+                            },
+                        ) { paddingValues ->
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(paddingValues.calculateTopPadding())
+                            ) {
+                                Column(modifier = Modifier.height(48.dp)) {
+                                    NavHost(
+                                        navController = navController,
+                                        startDestination = ScreenMLAgent
+                                    ) {
+                                        composable<ScreenMLAgent> {
+                                            Column {
+                                                ButtonList(
+                                                    onLoadModel = {
+                                                        mService?.send(
+                                                            Message.obtain(
+                                                                null,
+                                                                MessageType.LOAD_MODELS.value
+                                                            )
+                                                        )
+                                                    }
+                                                )
+                                                ServiceList(
+                                                    mViewModel.services.collectAsState().value,
+                                                    onClickStart = { id ->
+                                                        mService?.send(
+                                                            Message.obtain(
+                                                                null,
+                                                                MessageType.START_MODEL.value,
+                                                                id,
+                                                                0
+                                                            )
+                                                        )
+                                                    },
+                                                    onClickStop = { id ->
+                                                        mService?.send(
+                                                            Message.obtain(
+                                                                null,
+                                                                MessageType.STOP_MODEL.value,
+                                                                id,
+                                                                0
+                                                            )
+                                                        )
+                                                    },
+                                                    onClickDestroy = { id ->
+                                                        mService?.send(
+                                                            Message.obtain(
+                                                                null,
+                                                                MessageType.DESTROY_MODEL.value,
+                                                                id,
+                                                                0
+                                                            )
+                                                        )
+                                                    })
+                                            }
+                                        }
+
+                                        composable<ScreenVisionExample> {
+                                            Column(
+                                                modifier = Modifier.fillMaxSize(),
+                                                verticalArrangement = Arrangement.Center,
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                Box(modifier = Modifier.fillMaxSize()) {
+                                                    Text(text = "Vision Examples")
+                                                }
+                                            }
+                                        }
+
+                                        composable<ScreenSettings> {
+                                            val args = it.toRoute<ScreenSettings>()
+                                            Column(
+                                                modifier = Modifier.fillMaxSize(),
+                                                verticalArrangement = Arrangement.Center,
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                Text(text = args.msg)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }  // Scaffold
+                    } // ModalNavigationDrawer
+                } // Surface
             }
         }
         startForegroundService(Intent(this, MainService::class.java))
@@ -140,3 +320,14 @@ class MainActivity : ComponentActivity() {
         unbindService(connection)
     }
 }
+
+@Serializable
+object ScreenMLAgent
+
+@Serializable
+object ScreenVisionExample
+
+@Serializable
+data class ScreenSettings(
+    val msg: String
+)
