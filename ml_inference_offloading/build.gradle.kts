@@ -6,6 +6,7 @@ plugins {
     id(libs.plugins.androidApplication.get().pluginId)
     id(libs.plugins.googleDevtoolsKsp.get().pluginId)
     id(libs.plugins.jetbrainsKotlinAndroid.get().pluginId)
+    id(libs.plugins.jetbrainsKotlinSerialization.get().pluginId)
     id(libs.plugins.jetbrainsDokka.get().pluginId)
 }
 
@@ -85,7 +86,10 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.material.icons.core)
+    implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
@@ -112,6 +116,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
 
+    // Kotlinx
+    implementation(libs.kotlinx.serialization.json)
+
     // Release
     releaseImplementation(libs.androidx.ui.test.manifest)
 
@@ -123,7 +130,6 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.ui.test.junit4)
-
     // Dokka
     implementation(libs.dokka.base)
     dokkaPlugin(libs.dokka.mermaid)
