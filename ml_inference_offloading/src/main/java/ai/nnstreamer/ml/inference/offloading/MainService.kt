@@ -88,12 +88,12 @@ class MainService : Service() {
         }
     }
 
-    private inner class PipelineCallback(serviceId: Int, modelId: Int, port: Int) :
+    private inner class PipelineCallback(serviceId: Int, modelName: String, port: Int) :
         Pipeline.StateChangeCallback {
         val id = serviceId
 
         val serviceInfo = NsdServiceInfo().apply {
-            serviceName = modelId.toString()
+            serviceName = modelName
             serviceType = "_nsd_offloading._tcp"
             setPort(port)
         }
@@ -381,7 +381,7 @@ class MainService : Service() {
                         "tensor_query_serversrc id=" + serviceId.toString() + " host=" + hostAddress + " port=" +
                                 port.toString() + " ! " + filter + " ! tensor_query_serversink async=false id=" + serviceId.toString()
 
-                    val stateCb = PipelineCallback(serviceId, model.uid, port)
+                    val stateCb = PipelineCallback(serviceId, model.name, port)
                     val pipeline = Pipeline(desc, stateCb)
                     val registrationListener = NsdRegistrationListener()
 
