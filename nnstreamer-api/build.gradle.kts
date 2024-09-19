@@ -96,6 +96,26 @@ android {
                         }
                     }
                 }
+
+                if (project.hasProperty("dir.llama2c")) {
+                    val llama2cDir = properties["dir.llama2c"].toString()
+
+                    llama2cDir.also { dir ->
+                        val rootPath = externalDirPath.resolve(dir)
+                        val enableLlama2c = rootPath.isDirectory()
+
+                        arguments("ENABLE_LLAMA2C=$enableLlama2c")
+                        if (!enableLlama2c) {
+                            val msg =
+                                "The property, 'dir.llama2c', is specified in 'gradle.properties', " +
+                                        "but failed to resolve it to $rootPath. llama2.c support will be disabled."
+                            project.logger.lifecycle("WARNING: $msg")
+                            return@also
+                        }
+
+                        arguments("LLAMA2C_DIR=$rootPath")
+                    }
+                }
             }
         }
     }
