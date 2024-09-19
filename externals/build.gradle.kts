@@ -1,18 +1,18 @@
+import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
+import org.jetbrains.kotlin.daemon.common.toHexString
+import xyz.ronella.gradle.plugin.simple.git.task.GitTask
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
 import java.nio.channels.Channels
 import java.security.MessageDigest
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.isDirectory
-import kotlin.io.path.Path
-import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
-import org.jetbrains.kotlin.daemon.common.toHexString
-import xyz.ronella.gradle.plugin.simple.git.task.*
 
 plugins {
     base
@@ -61,7 +61,7 @@ tasks {
     // GStreamer Android Universal
     val gstVersion = try {
         libs.versions.gstreamer.get()
-    } catch(e: IllegalStateException) {
+    } catch (e: IllegalStateException) {
         error("Failed to resolve the variable that defines the required GStreamer version.")
     }
 
@@ -69,6 +69,7 @@ tasks {
         !project.hasProperty("dir.gstAndroid") -> {
             error("Could not find the project property, 'dir.gstAndroid'.")
         }
+
         project.properties["dir.gstAndroid"].toString().isBlank() -> {
             error("The project property, 'dir.gstAndroid', is set to an invalid value.")
         }
@@ -95,9 +96,11 @@ tasks {
         !project.hasProperty("dir.tfliteAndroid") -> {
             false
         }
+
         project.properties["dir.tfliteAndroid"].toString().isBlank() -> {
             false
         }
+
         else -> {
             true
         }
@@ -133,7 +136,10 @@ tasks {
             println("This step may take some time to complete...")
 
             val downloadableName = "$tarFileName$downloadableFormat"
-            downloadFile(URL("$url/$downloadableName"), downloadablePath.resolve(downloadableName).toString())
+            downloadFile(
+                URL("$url/$downloadableName"),
+                downloadablePath.resolve(downloadableName).toString()
+            )
 
             val verified = if (digestFileName.isEmpty().or(digestFileName.isBlank())) {
                 true
@@ -159,9 +165,10 @@ tasks {
             when {
                 downloadableName.endsWith(".xz") -> {
                     try {
-                        File("$downloadablePath/$downloadableName").inputStream().buffered().use { bufferedIn ->
-                            XZCompressorInputStream(bufferedIn).toFile("$downloadablePath/$tarFileName")
-                        }
+                        File("$downloadablePath/$downloadableName").inputStream().buffered()
+                            .use { bufferedIn ->
+                                XZCompressorInputStream(bufferedIn).toFile("$downloadablePath/$tarFileName")
+                            }
                         downloadablePath.resolve(downloadableName).deleteIfExists()
                     } catch (e: IOException) {
                         println("Failed to decompress $downloadablePath/$downloadableName")
@@ -174,8 +181,8 @@ tasks {
 
     register("copyFromTar") {
         doLast {
-            for (downloadble in downloadables) {
-                val (tarFileName, targetDir, _, isEnabled) = downloadble
+            for (downloadable in downloadables) {
+                val (tarFileName, targetDir, _, isEnabled) = downloadable
 
                 if (!isEnabled) {
                     continue
