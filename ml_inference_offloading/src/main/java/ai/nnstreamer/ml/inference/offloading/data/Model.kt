@@ -179,7 +179,7 @@ data class Model(
 
         val filter =
             "other/tensors,format=${inFormat}${inTensors}${inDims}${inTypes},framerate=0/1 ! " +
-                    "tensor_filter framework=tensorflow-lite model=${modelPaths} ! " +
+                    "tensor_filter framework=${framework} model=${modelPaths} ! " +
                     "other/tensors,format=${outFormat}${outTensors}${outDims}${outTypes},framerate=0/1"
 
         return filter
