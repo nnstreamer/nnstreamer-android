@@ -54,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -230,8 +231,9 @@ class MainActivity : ComponentActivity() {
                                                         )
                                                     }
                                                 )
+                                                val offloadingServiceUiStates by mViewModel.services.collectAsStateWithLifecycle()
                                                 ServiceList(
-                                                    mViewModel.services.collectAsState().value,
+                                                    offloadingServiceUiStates,
                                                     onClickStart = { id ->
                                                         mService?.send(
                                                             Message.obtain(
