@@ -169,7 +169,7 @@ data class Model(
         val outFormat = outputInfo["format"]?.let { getFormat(it) } ?: "static"
 
         val inTensors = getTensors(inputInfo["type"], inFormat)
-        val outTensors = getTensors(outputInfo["type"], inFormat)
+        val outTensors = getTensors(outputInfo["type"], outFormat)
 
         val inTypes = inputInfo["type"]?.let { getType(it) } ?: ""
         val outTypes = outputInfo["type"]?.let { getType(it) } ?: ""
