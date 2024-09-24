@@ -252,7 +252,6 @@ class MainService : Service() {
             HandlerThread("ServiceStartArguments", Process.THREAD_PRIORITY_BACKGROUND).apply {
                 start()
             }
-        this.applicationContext
 
         serviceLooper = handlerThread.looper
         serviceHandler = MainHandler(serviceLooper)
@@ -267,11 +266,6 @@ class MainService : Service() {
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Toast.makeText(this, "Starting the MainService", Toast.LENGTH_SHORT).show()
-
-        serviceHandler.obtainMessage().also { msg ->
-            msg.arg1 = startId
-            serviceHandler.sendMessage(msg)
-        }
 
         startForeground()
 
