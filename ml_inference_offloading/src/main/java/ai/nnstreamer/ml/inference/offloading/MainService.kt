@@ -5,6 +5,8 @@ import ai.nnstreamer.ml.inference.offloading.data.OffloadingService
 import ai.nnstreamer.ml.inference.offloading.data.OffloadingServiceRepositoryImpl
 import ai.nnstreamer.ml.inference.offloading.data.PreferencesDataStoreImpl
 import ai.nnstreamer.ml.inference.offloading.network.NsdRegistrationListener
+import ai.nnstreamer.ml.inference.offloading.network.findPort
+import ai.nnstreamer.ml.inference.offloading.network.getIpAddress
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -13,7 +15,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
-import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdManager.RegistrationListener
 import android.net.nsd.NsdServiceInfo
@@ -36,10 +37,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.nnsuite.nnstreamer.NNStreamer
 import org.nnsuite.nnstreamer.Pipeline
-import java.net.Inet4Address
-import java.net.ServerSocket
 import javax.inject.Inject
-import kotlin.concurrent.thread
 
 /**
  * Enum class representing different types of messages that can be sent.
@@ -318,49 +316,8 @@ class MainService : Service() {
         }
     }
 
-    // TODO: Add an ApplicationContext Parameter
-    private fun getIpAddress(): String {
-        val connectivityManager =
-            App.context().getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-        val network = connectivityManager.activeNetwork
-        var inetAddress = if (isRunningOnEmulator) "10.0.2.2" else "localhost"
-        val linkProperties = connectivityManager.getLinkProperties(network) ?: return inetAddress
-
-        for (linkAddress in linkProperties.linkAddresses) {
-            val address = linkAddress.address ?: continue
-
-            when {
-                address !is Inet4Address -> continue
-                address.isLoopbackAddress -> continue
-                else -> {
-                    inetAddress = address.hostAddress ?: continue
-
-                    break
-                }
-            }
-        }
-
-        return inetAddress
-    }
-
-    private fun findPort(): Int {
-        var port = -1
-        val portFinder = thread() {
-            try {
-                val serverSocket = ServerSocket(0)
-                Log.i(TAG, "listening on port: " + serverSocket.localPort)
-                port = serverSocket.localPort
-                serverSocket.close()
-            } catch (e: Exception) {
-                Log.e(TAG, e.toString())
-            }
-        }
-        portFinder.join()
-        return port
-    }
-
     private fun loadModels() {
-        val hostAddress = getIpAddress()
+        val hostAddress = getIpAddress(isRunningOnEmulator)
         val models = modelsRepository.getAllModelsStream()
 
         CoroutineScope(Dispatchers.IO).launch {
