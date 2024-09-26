@@ -87,6 +87,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.material.icons.core)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.material3)
@@ -99,6 +100,17 @@ dependencies {
     // Room
     implementation(libs.androidx.room.common)
     implementation(libs.androidx.room.runtime)
+
+    // Camera
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.video)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.extensions)
+    implementation(libs.firebase.crashlytics.buildtools)
+
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 
