@@ -1,25 +1,35 @@
 package ai.nnstreamer.ml.inference.offloading
 
+import ai.nnstreamer.ml.inference.offloading.data.Classification
+import ai.nnstreamer.ml.inference.offloading.data.ImageAnalyzer
+import ai.nnstreamer.ml.inference.offloading.domain.MobilenetClassifier
 import ai.nnstreamer.ml.inference.offloading.ui.MainViewModel
 import ai.nnstreamer.ml.inference.offloading.ui.components.ButtonList
 import ai.nnstreamer.ml.inference.offloading.ui.components.ServiceList
 import ai.nnstreamer.ml.inference.offloading.ui.theme.NnstreamerandroidTheme
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Message
 import android.os.Messenger
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.camera.view.CameraController
+import androidx.camera.view.LifecycleCameraController
+import androidx.camera.view.PreviewView
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -44,16 +54,24 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -112,6 +130,14 @@ class MainActivity : ComponentActivity() {
         // Dependency Injection
         (application as App).appComponent.inject(this)
         super.onCreate(savedInstanceState)
+        if (!hasCameraPermission()) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.CAMERA),
+                0
+            )
+        }
+
         setContent {
             NnstreamerandroidTheme {
                 val navController = rememberNavController()
@@ -268,17 +294,55 @@ class MainActivity : ComponentActivity() {
                                         }
 
                                         composable<ScreenVisionExample> {
-                                            Column(
-                                                modifier = Modifier.fillMaxSize(),
-                                                verticalArrangement = Arrangement.Center,
-                                                horizontalAlignment = Alignment.CenterHorizontally
-                                            ) {
-                                                Box(modifier = Modifier.fillMaxSize()) {
-                                                    Text(text = "Vision Examples")
+                                            var classifications by remember {
+                                                mutableStateOf(emptyList<Classification>())
+                                            }
+                                            val analyzer = remember {
+                                                ImageAnalyzer(
+                                                    MobilenetClassifier(
+                                                        mService,
+                                                        onResults = {
+                                                            classifications = it
+                                                        }),
+                                                )
+                                            }
+                                            val controller = remember {
+                                                LifecycleCameraController(applicationContext).apply {
+                                                    setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
+                                                    setImageAnalysisAnalyzer(
+                                                        ContextCompat.getMainExecutor(
+                                                            applicationContext
+                                                        ),
+                                                        analyzer
+                                                    )
                                                 }
                                             }
+                                            Box(modifier = Modifier.fillMaxSize()) {
+                                                CameraPreview(
+                                                    controller,
+                                                    Modifier
+                                                        .fillMaxSize()
+                                                )
+                                                Column(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .align(Alignment.BottomCenter),
+                                                ) {
+                                                    classifications.forEach { classification ->
+                                                        Text(
+                                                            text = "${classification.label} (${classification.confidence}%)",
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .background(colorScheme.secondaryContainer)
+                                                                .padding(16.dp),
+                                                            textAlign = TextAlign.Center,
+                                                            fontSize = 20.sp,
+                                                            color = colorScheme.onSecondaryContainer,
+                                                        )
+                                                    }
+                                                } // Column
+                                            } // Box
                                         }
-
                                         composable<ScreenSettings> {
                                             val args = it.toRoute<ScreenSettings>()
                                             Column(
@@ -321,6 +385,28 @@ class MainActivity : ComponentActivity() {
         super.onStop()
         unbindService(connection)
     }
+
+    @Composable
+    fun CameraPreview(
+        controller: LifecycleCameraController,
+        modifier: Modifier = Modifier
+    ) {
+        val lifecycleOwner = LocalLifecycleOwner.current
+
+        AndroidView(
+            factory = {
+                PreviewView(it).apply {
+                    this.controller = controller
+                    controller.bindToLifecycle(lifecycleOwner)
+                }
+            },
+            modifier = modifier,
+        )
+    }
+
+    private fun hasCameraPermission() = ContextCompat.checkSelfPermission(
+        this, Manifest.permission.CAMERA
+    ) == PackageManager.PERMISSION_GRANTED
 }
 
 @Serializable

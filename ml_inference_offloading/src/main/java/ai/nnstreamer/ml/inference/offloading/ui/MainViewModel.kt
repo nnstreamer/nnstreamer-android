@@ -58,7 +58,7 @@ class MainViewModel @Inject constructor(private val offloadingServiceRepositoryI
                     val newState = OffloadingServiceUiState(it.serviceId, it.state, it.port)
                     newList.add(newState)
                 }
-                _services.value = newList.toList()
+                _services.emit(newList)
             }
         }
     }

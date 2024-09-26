@@ -19,6 +19,7 @@ import android.net.nsd.NsdManager
 import android.net.nsd.NsdManager.RegistrationListener
 import android.net.nsd.NsdServiceInfo
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
@@ -46,7 +47,8 @@ enum class MessageType(val value: Int) {
     LOAD_MODELS(0),
     START_MODEL(1),
     STOP_MODEL(2),
-    DESTROY_MODEL(3)
+    DESTROY_MODEL(3),
+    REQ_OBJ_CLASSIFICATION_FILTER(4),
 }
 
 /**
@@ -80,6 +82,41 @@ class MainService : Service() {
 
                 MessageType.DESTROY_MODEL.value ->
                     destroyService(msg.arg1)
+
+                // todo: Generalize the message handling for ML service requests
+                MessageType.REQ_OBJ_CLASSIFICATION_FILTER.value -> {
+                    val models = modelsRepository.getAllModelsStream()
+                    val bundle = Bundle()
+                    val replyMsg = Message()
+                    val labels = mutableListOf<String>()
+
+                    // todo: Remove hardcoded label file path
+                    val imagenetLabelPath =
+                        applicationContext.getExternalFilesDir("models")?.run {
+                            resolve("imagenet_labels.txt")
+                        }
+
+                    imagenetLabelPath?.bufferedReader()?.use { reader ->
+                        reader.lineSequence().forEach { line ->
+                            labels.add(line)
+                        }
+                    }
+
+                    bundle.putStringArray("labels", labels.toTypedArray())
+                    // fixme: This is dangerous. We should not use blocking calls in handler.
+                    runBlocking {
+                        models.collect {
+                            it.forEach { model ->
+                                if (model.name.contains("mobilenet")) {
+                                    bundle.putString("filter", model.getNNSFilterDesc())
+
+                                    replyMsg.data = bundle
+                                    msg.replyTo.send(replyMsg)
+                                }
+                            }
+                        }
+                    }
+                }
 
                 else -> super.handleMessage(msg)
             }
