@@ -7,6 +7,8 @@ import ai.nnstreamer.ml.inference.offloading.data.PreferencesDataStoreImpl
 import ai.nnstreamer.ml.inference.offloading.network.NsdRegistrationListener
 import ai.nnstreamer.ml.inference.offloading.network.findPort
 import ai.nnstreamer.ml.inference.offloading.network.getIpAddress
+import ai.nnstreamer.ml.inference.offloading.domain.NewDataCb
+import ai.nnstreamer.ml.inference.offloading.domain.runLlama2
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -34,6 +36,8 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.nnsuite.nnstreamer.NNStreamer
@@ -49,6 +53,7 @@ enum class MessageType(val value: Int) {
     STOP_MODEL(2),
     DESTROY_MODEL(3),
     REQ_OBJ_CLASSIFICATION_FILTER(4),
+    REQ_LLM_FILTER(5)
 }
 
 /**
@@ -116,6 +121,11 @@ class MainService : Service() {
                             }
                         }
                     }
+                }
+
+                MessageType.REQ_LLM_FILTER.value -> {
+                    loadModels()
+                    runLLM(msg.data.getString("input") ?: "", msg.replyTo)
                 }
 
                 else -> super.handleMessage(msg)
@@ -405,6 +415,39 @@ class MainService : Service() {
         serviceMap.remove(id)
         CoroutineScope(Dispatchers.IO).launch {
             offloadingServiceRepositoryImpl.deleteOffloadingService(id)
+        }
+    }
+
+    private suspend fun findService(name: String): OffloadingService? {
+        val models = modelsRepository.getAllModelsStream()
+        // todo: Improve search methods
+        val model = models.filter { list ->
+            list.any {
+                it.name.contains(name)
+            }
+        }.firstOrNull()?.get(0)
+
+        val modelId = model?.uid
+
+        val services = offloadingServiceRepositoryImpl.getAllOffloadingService()
+        val service = services.filter { list ->
+            list.any {
+                it.modelId == modelId
+            }
+        }.firstOrNull()?.get(0)
+
+        return service
+    }
+
+    private fun runLLM(input: String, messenger: Messenger?) {
+        CoroutineScope(Dispatchers.IO).launch {
+            // todo: Support other models
+            val service = findService("llama")
+
+            if (service != null) {
+                startService(service.serviceId)
+                runLlama2(input, getIpAddress(isRunningOnEmulator), service.port, NewDataCb(messenger))
+            }
         }
     }
 }
