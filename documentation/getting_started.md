@@ -243,6 +243,32 @@ WARNING: Default profile is used for sign. This signed package is valid for emul
 Package File Location: nnstreamer-example/Tizen.web/ImageClassificationOffloading/.buildResult/ImageClassificationOffloading.wgt
 ```
 
+Tizen supports [hybrid application](https://docs.tizen.org/application/web/#hybrid-application-package), which combines a web application and 1 or more native servics.
+We need a hybrid app to get the port value automatically from the offloading service.
+
+```bash
+$ cd nnstreamer-example/Tizen.web/ImageClassificationOffloadingService
+$ tizen build-native -a arm -c llvm -C Debug -- .
+[PLATFORM] Tizen-8.0
+...omitted...
+Total time: 00:00:00.314
+
+$ tizen package -t tpk -- Debug
+Initialize... OK
+...omitted...
+Package File Location: nnstreamer-example/Tizen.web/ImageClassificationOffloadingService/Debug/EQmf4iSfpX-1.0.0-arm.tpk
+
+$ cd nnstreamer-example/Tizen.web/ImageClassificationOffloading
+$ tizen package -t wgt -r ../ImageClassificationOffloadingService/Debug/EQmf4iSfpX-1.0.0-arm.tpk  -- .buildResult/ImageClassificationOffloading.wgt
+The active profile is used for signing. If you want to sign with other profile, please use '--sign' option.
+...omitted...
+Package( nnstreamer-example/Tizen.web/ImageClassificationOffloading/.buildResult/ImageClassificationOffloading.wgt ) is created successfully.
+```
+Tizen Web App build process is done automatically through [github actions](https://github.com/nnstreamer/nnstreamer-example/actions/workflows/tizen-build.yml).
+So if you don't need to build it yourself, you can download `tizen_web_ImageClassificationOffloading` created from `main` branch.
+
+![Github action artifacts](img/Github_artifacts.png)
+
 ### Running the Tizen Web App on the Tizen Emulator
 
 As mentioned above, the Tizen CLI supports installing and running the Tizen Web App on the Tizen
@@ -645,13 +671,14 @@ successfully installed and launched on the device.
 ### Run Tizen-to-Android Offloading
 
 To run Tizen-to-Android Offloading you need to connect both devices to the same Wi-Fi network or
-ethernet. Press the start button on the Android device to run the server. Then, the port number the
-server is listening will display on the screen like the following screenshot.
+ethernet. Press the load models button on the Android device to run the offloading service
+based on the conf files. Then, the port number to which the service is listening will display
+on the screen like the following screenshot.
 
 ![Android Device (Start the server): A-34-arm64](img/A-34-arm64_port.jpg)
 
-Use android's port number in Tizen application and create pipelines by pressing buttons. When the
-image classification task runs successfully, the detected label and inference time are displayed on
+Tizen devices automatically find offloading services using the model ID. When the image
+classification task runs successfully, the detected label and inference time are displayed on
 the screen as shown below.
 
 ![Tizen Device (Start the client): T-8.0-armv7l](img/T-8.0-armv7l_run.png)
