@@ -630,7 +630,7 @@ Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.L
 ```
 
 If you can see the same user interface as the following screenshot, the Android app has been
-successfully launched on the AVD..
+successfully launched on the AVD.
 ![Android Virtual Device (Running the App): A-34-x86_64](img/Emul_A-34-x86_64_run.png)
 
 #### Running the Android App on the Android Device
