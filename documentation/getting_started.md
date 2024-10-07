@@ -685,10 +685,16 @@ the screen as shown below.
 
 The devices used to capture the screenshots are Galasy S24 and Raspberry Pi4.
 
-### Run Android Inference
+### ML Computation Delegation scenario
 
-`NNStreamer-SSD` is a simple object detection example with TF-Lite model.
-You can see build and install
-process [here](https://github.com/nnstreamer/nnstreamer-example/tree/main/android/example_app#build-example)
+#### Handling ML Computation Delegation Requests from the Android Components in the Same package
 
-![Android example](img/A-24-arm64_ssd.jpg)
+The MLAgent service can also handle the ML Computation requests from the other components in the same package. In order to demonstrate this scenario, we added a simple Activity example to the `ml_inference_offloading` package. This example uses the Android CameraX API to take a picture and send it to the MLAgent service for inference. Then, MLAgent service handles the requests using the bundled models and returns the result to the calling component.
+
+To change the screen to the demonstrate the scenario, 1) open the modal navigation drawer and 2) select the **Vision Examples**. Note that to open the navigation drawer you need to press [the hamburger menu button](https://fonts.google.com/icons?selected=Material+Symbols+Outlined:menu:FILL@0;wght@400;GRAD@0;opsz@24&icon.size=24&icon.color=%235f6368&icon.platform=android) on the top left corner of the screen. The detail procedure to change the screen is shown in the following screenshots.
+
+![Android Device (Running the App): Open the modal navigation drawer](img/A-34-arm64_Drawer.png)
+
+After changing the screen, you can see the **Camera Preview** and the real-time object classification result above the preview box as shown below.
+
+![Android example](img/A-34-arm64_VisionEx0.png)
