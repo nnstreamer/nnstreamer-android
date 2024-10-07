@@ -519,6 +519,38 @@ $ find ./ml_inference_offloading/ -name "*.apk"
 ./ml_inference_offloading/build/outputs/apk/release/ml_inference_offloading-release-unsigned.apk
 ```
 
+#### Building the Android App with llama2
+
+The following steps are required to run an LLM task (i.e., Llama2) via the Android app.
+
+##### Preparing the llama2 model
+
+We need a pair of the model and tokenizer files for an LLM task. You can download a small model for the Android device using this [guide](https://github.com/karpathy/llama2.c/tree/master?tab=readme-ov-file#custom-tokenizers).
+
+```bash
+$ ls
+model.bin tok4096.bin
+
+$ mv model.bin nnstreamer-android/ml_inference_offloading/src/main/assets/models/llama2c.bin
+$ mv tok4096.bin nnstreamer-android/ml_inference_offloading/src/main/assets/models/tokenizer.bin
+```
+
+##### Building the llama2.c for Android
+
+To build application with llama2.c, you need to clone this [repository](https://github.com/nnsuite/llama2.c).
+
+```bash
+$ git clone https://github.com/nnsuite/llama2.c externals/llama2.c
+
+$ ls externals/llama2.c/
+...omitted...
+```
+
+Then, set the directory where the llama2.c placed to the [gradle.properties](/gradle.properties).
+```
+dir.llama2c=llama2.c
+```
+
 ### Running the Android App on the Target Device
 
 #### Running the Android App on the Android Emulator
