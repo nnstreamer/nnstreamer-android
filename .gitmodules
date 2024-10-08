@@ -10,3 +10,6 @@
 	path = externals/nnstreamer-edge
 	url = https://github.com/nnstreamer/nnstreamer-edge
 	branch = main
+[submodule "externals/llama2.c"]
+	path = externals/llama2.c
+	url = https://github.com/nnsuite/llama2.c
