@@ -523,7 +523,7 @@ $ find ./ml_inference_offloading/ -name "*.apk"
 
 The following steps are required to run an LLM task (i.e., Llama2) via the Android app.
 
-##### Preparing the llama2 model
+##### Preparing the llama2 model and the configuration file
 
 We need a pair of the model and tokenizer files for an LLM task. You can download a small model for the Android device using this [guide](https://github.com/karpathy/llama2.c/tree/master?tab=readme-ov-file#custom-tokenizers).
 
@@ -535,18 +535,17 @@ $ mv model.bin nnstreamer-android/ml_inference_offloading/src/main/assets/models
 $ mv tok4096.bin nnstreamer-android/ml_inference_offloading/src/main/assets/models/tokenizer.bin
 ```
 
-##### Building the llama2.c for Android
-
-To build application with llama2.c, you need to clone this [repository](https://github.com/nnsuite/llama2.c).
+We provide llama2.c as an example [configuration file](/documentation/example_conf/llama2c.conf).
+To use it, copy the configuration file to the assets directory.
 
 ```bash
-$ git clone https://github.com/nnsuite/llama2.c externals/llama2.c
-
-$ ls externals/llama2.c/
-...omitted...
+$ cp documentation/example_conf/llama2c.conf ml_inference_offloading/src/main/assets/models
 ```
 
-Then, set the directory where the llama2.c placed to the [gradle.properties](/gradle.properties).
+##### Building the llama2.c for Android
+
+To build the application with llama2.c, you need to indicate the directory where llama2.c is placed via the ```dir.llama2c``` property in the [gradle.properties](/gradle.properties).
+
 ```
 dir.llama2c=llama2.c
 ```
@@ -730,3 +729,28 @@ To change the screen to the demonstrate the scenario, 1) open the modal navigati
 After changing the screen, you can see the **Camera Preview** and the real-time object classification result above the preview box as shown below.
 
 ![Android example](img/A-34-arm64_VisionEx0.png)
+
+#### Handling ML Computation Delegation Requests from the Android Components in the Other package
+
+The MLAgent can handle the delegation requests from the other package. The following code should be added to the other package's `AndroidManifest.xml`
+for [package visibility](https://developer.android.com/training/package-visibility/declaring).
+
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <queries>
+        <package android:name="ai.nnstreamer.ml.inference.offloading" />
+        <package android:name="ai.nnstreamer.ml.inference.offloading.MainService" />
+    </queries>
+    ...
+</manifest>
+```
+
+We are providing a simple example application that demonstrates this scenario. This example sends an input prompt to the MLAgent
+and retrieves the generated output text using the llama2 model.
+
+To receive auto-generated text by llama2 model, 1) enter the beginning of the sentence and 2) press the `Run llama2` button.
+
+![Android example](img/A-34-arm64_LlamaEx0.jpeg)
+
+If you want to build this example, you can follow [the guide](https://github.com/nnstreamer/nnstreamer-example/blob/main/android/kotlin_app/README.md).
