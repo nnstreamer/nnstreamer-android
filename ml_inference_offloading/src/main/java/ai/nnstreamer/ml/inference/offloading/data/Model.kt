@@ -134,7 +134,7 @@ data class Model(
     }
 
     private fun getType(list: List<String>): String {
-        val filtered = list.filterNot{ it.isEmpty() or it.isBlank() }
+        val filtered = list.filterNot { it.isEmpty() or it.isBlank() }
         return if (filtered.isEmpty()) {
             ""
         } else {
@@ -177,9 +177,11 @@ data class Model(
         val inDims = inputInfo["dimension"]?.let { getDimension(it) } ?: ""
         val outDims = outputInfo["dimension"]?.let { getDimension(it) } ?: ""
 
+        val invokeDynamic = if (outFormat != "static") "TRUE" else "FALSE"
+
         val filter =
             "other/tensors,format=${inFormat}${inTensors}${inDims}${inTypes},framerate=0/1 ! " +
-                    "tensor_filter framework=${framework} model=${modelPaths} ! " +
+                    "tensor_filter framework=${framework} model=${modelPaths} invoke-dynamic=$invokeDynamic ! " +
                     "other/tensors,format=${outFormat}${outTensors}${outDims}${outTypes},framerate=0/1"
 
         return filter
