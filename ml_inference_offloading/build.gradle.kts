@@ -8,11 +8,12 @@ plugins {
     id(libs.plugins.jetbrainsKotlinAndroid.get().pluginId)
     id(libs.plugins.jetbrainsKotlinSerialization.get().pluginId)
     id(libs.plugins.jetbrainsDokka.get().pluginId)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "ai.nnstreamer.ml.inference.offloading"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "ai.nnstreamer.ml.inference.offloading"

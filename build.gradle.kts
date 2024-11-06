@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid) apply false
     alias(libs.plugins.jetbrainsKotlinSerialization) apply false
     alias(libs.plugins.jetbrainsDokka) apply false
+    alias(libs.plugins.kotlin.compose) apply false
 }
 
 buildscript {
