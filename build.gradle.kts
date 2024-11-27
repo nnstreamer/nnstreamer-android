@@ -20,5 +20,6 @@ tasks {
     register("cleanAll") {
         dependsOn("nnstreamer-api:cleanAll")
         dependsOn("externals:cleanAll")
+        dependsOn("ml_inference_offloading:cleanAll")
     }
 }

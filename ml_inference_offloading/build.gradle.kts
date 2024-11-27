@@ -79,6 +79,10 @@ tasks {
             }
         }
     }
+
+    register("cleanAll", Delete::class) {
+        dependsOn("clean")
+    }
 }
 
 dependencies {
