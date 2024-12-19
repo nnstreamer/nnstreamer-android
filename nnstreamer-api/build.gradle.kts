@@ -116,6 +116,25 @@ android {
                         arguments("LLAMA2C_DIR=$rootPath")
                     }
                 }
+
+                if (project.hasProperty("dir.llamacpp")) {
+                    val llamacppDir = properties["dir.llamacpp"].toString()
+
+                    llamacppDir.also { dir ->
+                        val rootPath = externalDirPath.resolve(dir)
+                        val enableLlamacpp = rootPath.isDirectory()
+
+                        arguments("ENABLE_LLAMACPP=$enableLlamacpp")
+                        if (!enableLlamacpp) {
+                            val msg =
+                                "The property, 'dir.llamacpp', is specified in 'gradle.properties', " +
+                                        "but failed to resolve it to $rootPath. llamacpp support will be disabled."
+                            project.logger.lifecycle("WARNING: $msg")
+                            return@also
+                        }
+                        arguments("LLAMACPP_DIR=$rootPath")
+                    }
+                }
             }
         }
     }
