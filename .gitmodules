@@ -13,3 +13,6 @@
 [submodule "externals/llama2.c"]
 	path = externals/llama2.c
 	url = https://github.com/nnsuite/llama2.c
+[submodule "externals/deviceMLOps.MLAgent"]
+	path = externals/deviceMLOps.MLAgent
+	url = https://github.com/nnstreamer/deviceMLOps.MLAgent.git
