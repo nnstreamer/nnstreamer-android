@@ -28,12 +28,17 @@ tasks {
     }
 
     fun downloadFile(url: URL, outputFileName: String) {
-        url.openStream().use {
-            Channels.newChannel(it).use { rbc ->
-                FileOutputStream(outputFileName).use { fos ->
-                    fos.channel.transferFrom(rbc, 0, Long.MAX_VALUE)
+        val outFile = File(outputFileName)
+        if (!outFile.exists()) {
+            url.openStream().use {
+                Channels.newChannel(it).use { rbc ->
+                    FileOutputStream(outputFileName).use { fos ->
+                        fos.channel.transferFrom(rbc, 0, Long.MAX_VALUE)
+                    }
                 }
             }
+        } else {
+            println("$outputFileName already exists. Skip download.")
         }
     }
 
@@ -106,6 +111,32 @@ tasks {
         }
     }
 
+    val curlVersion = libs.versions.curl.get()
+    val enabledCurl = when {
+        !project.hasProperty("feature.mlService") -> {
+            false
+        }
+        project.properties["feature.mlService"].toString() == "false" -> {
+            false
+        }
+        else -> {
+            true
+        }
+    }
+
+    val sqliteVersion = libs.versions.sqlite.get()
+    val enabledSqlite = when {
+        !project.hasProperty("feature.mlService") -> {
+            false
+        }
+        project.properties["feature.mlService"].toString() == "false" -> {
+            false
+        }
+        else -> {
+            true
+        }
+    }
+
     val tfliteDownloadable =
         Downloadable(
             "tensorflow-lite-$tfliteVersion.tar",
@@ -116,6 +147,26 @@ tasks {
         )
     downloadables.add(tfliteDownloadable)
 
+    val curlDownloadable =
+        Downloadable(
+            "curl-$curlVersion.tar",
+            "ml-api/java/android/nnstreamer/src/main/jni",
+            "https://raw.githubusercontent.com/nnstreamer/nnstreamer-android-resource/master/external",
+            enabledCurl,
+            ".xz"
+        )
+    downloadables.add(curlDownloadable)
+
+    val sqliteDownloadable =
+        Downloadable(
+            "sqlite-$sqliteVersion.tar",
+            "ml-api/java/android/nnstreamer/src/main/jni",
+            "https://raw.githubusercontent.com/nnstreamer/nnstreamer-android-resource/master/external",
+            enabledSqlite,
+            ".xz"
+        )
+    downloadables.add(sqliteDownloadable)
+
 
     register("prepareDownloadable") {
         if (!downloadablePath.isDirectory()) {
@@ -125,13 +176,11 @@ tasks {
 
         for (downloadable in downloadables) {
             val (tarFileName, targetDir, url, isEnabled, downloadableFormat, digestFileName) = downloadable
-            val targetPath = projectDir.toPath().resolve(targetDir)
 
-            if (!isEnabled || targetPath.isDirectory()) {
+            if (!isEnabled) {
                 continue
             }
 
-            println("Could not find $targetPath")
             println("...downloading from $url")
             println("This step may take some time to complete...")
 
@@ -192,10 +241,6 @@ tasks {
                 val tree = tarTree(tarPath)
                 var intoPath = projectDir.toPath().resolve(targetDir)
 
-                if (intoPath.exists()) {
-                    continue
-                }
-
                 tree.visit {
                     if (this.relativePath.startsWith(targetDir)) {
                         intoPath = projectDir.toPath()
@@ -211,6 +256,7 @@ tasks {
                 tarPath.deleteIfExists()
             }
         }
+        dependsOn("updateGitSubmodules")
         dependsOn("prepareDownloadable")
     }
 
@@ -244,5 +290,4 @@ tasks {
 
 tasks.named("build") {
     dependsOn("copyFromTar")
-    dependsOn("updateGitSubmodules")
 }

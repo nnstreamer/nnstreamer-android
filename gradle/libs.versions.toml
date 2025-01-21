@@ -31,6 +31,8 @@ uiTestJunit4Android = "1.7.5"
 xyz-simple-git-plugin = "2.0.3"
 cameraCore = "1.4.0"
 firebaseCrashlyticsBuildtools = "3.0.2"
+curl = "7.60.0"
+sqlite = "3.48.0"
 
 [libraries]
 commons-compress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commons-compress-lib" }

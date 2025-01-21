@@ -21,6 +21,12 @@ android {
     val nnsEdgeDir = properties["dir.nnstreamerEdge"].toString()
     val nnsEdgeRootPath = externalDirPath.resolve(nnsEdgeDir)
 
+    val mlopsAgentDir = properties["dir.mlopsAgent"].toString()
+    val mlopsAgentRootPath = externalDirPath.resolve(mlopsAgentDir)
+
+    val mlOffloadingFeature = properties["feature.mlOffloading"].toString()
+    val mlServiceFeature = properties["feature.mlService"].toString()
+
     val mlApiDir = properties["dir.mlApi"].toString()
     val mlApiRootPath = externalDirPath.resolve(mlApiDir)
     val mlApiNNSJniPath = mlApiRootPath.resolve("java/android/nnstreamer/src/main/jni")
@@ -41,7 +47,10 @@ android {
                     "GSTREAMER_ROOT_ANDROID=$gstRootPath",
                     "NNSTREAMER_ROOT=$nnsRootPath",
                     "NNSTREAMER_EDGE_ROOT=$nnsEdgeRootPath",
-                    "ML_API_ROOT=$mlApiRootPath"
+                    "MLOPS_AGENT_ROOT=$mlopsAgentRootPath",
+                    "ML_API_ROOT=$mlApiRootPath",
+                    "ENABLE_ML_OFFLOADING=$mlOffloadingFeature",
+                    "ENABLE_ML_SERVICE=$mlServiceFeature"
                 )
                 targets("nnstreamer-native")
 
