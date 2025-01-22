@@ -7,12 +7,12 @@ import ai.nnstreamer.ml.inference.offloading.ui.MainViewModel
 import ai.nnstreamer.ml.inference.offloading.ui.components.ButtonList
 import ai.nnstreamer.ml.inference.offloading.ui.components.ServiceList
 import ai.nnstreamer.ml.inference.offloading.ui.theme.NnstreamerandroidTheme
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.IBinder
@@ -81,6 +81,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import javax.inject.Inject
 
+
 data class NavigationItem(
     val title: String,
     val selectedIcon: ImageVector,
@@ -130,12 +131,14 @@ class MainActivity : ComponentActivity() {
         // Dependency Injection
         (application as App).appComponent.inject(this)
         super.onCreate(savedInstanceState)
-        if (!hasCameraPermission()) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.CAMERA),
-                0
-            )
+
+        val info: PackageInfo =
+            packageManager.getPackageInfo(applicationContext.packageName, PackageManager.GET_PERMISSIONS)
+        val permissions = info.requestedPermissions
+        if (permissions != null) {
+            if (!permissions.all { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED }) {
+                ActivityCompat.requestPermissions(this, permissions, 0)
+            }
         }
 
         setContent {
@@ -403,10 +406,6 @@ class MainActivity : ComponentActivity() {
             modifier = modifier,
         )
     }
-
-    private fun hasCameraPermission() = ContextCompat.checkSelfPermission(
-        this, Manifest.permission.CAMERA
-    ) == PackageManager.PERMISSION_GRANTED
 }
 
 @Serializable
