@@ -8,6 +8,7 @@ import ai.nnstreamer.ml.inference.offloading.ui.components.ButtonList
 import ai.nnstreamer.ml.inference.offloading.ui.components.ServiceList
 import ai.nnstreamer.ml.inference.offloading.ui.theme.NnstreamerandroidTheme
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -20,6 +21,7 @@ import android.os.Message
 import android.os.Messenger
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
@@ -69,7 +71,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -118,6 +119,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val allPermissionsGranted = !permissions.containsValue(false)
+
+            if (!allPermissionsGranted) {
+                AlertDialog.Builder(this)
+                    .setTitle("Need all permission.")
+                    .setMessage("If you do not grant the necessary permissions, the app will not be able to to run. You need to allow the app to access the required permissions.")
+                    .setPositiveButton("Exit") { _, _ ->
+                        finishAffinity()
+                    }
+                    .show()
+            }
+        }
+
     /**
      * A lifecycle callback method that overrides [ComponentActivity.onCreate].
      *
@@ -134,10 +151,10 @@ class MainActivity : ComponentActivity() {
 
         val info: PackageInfo =
             packageManager.getPackageInfo(applicationContext.packageName, PackageManager.GET_PERMISSIONS)
-        val permissions = info.requestedPermissions
-        if (permissions != null) {
-            if (!permissions.all { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED }) {
-                ActivityCompat.requestPermissions(this, permissions, 0)
+
+        info.requestedPermissions?.let { permissions ->
+            if (permissions.any {ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED}) {
+                requestPermissionLauncher.launch(permissions)
             }
         }
 
